@@ -59,14 +59,20 @@ russh-sftp = "3.0.0"
 suppaftp = { version = "12.0.0", features = ["tokio-rustls-ring"] }
 
 # --- credenciales en el llavero del sistema operativo ---
-# El llavero no existe en Android: el crate no tiene implementación para esa
-# plataforma y `linux-native` arrastraría el llavero del kernel de Linux, que ahí
-# no está. En Android se usa el almacén de fichero (ver `config::secrets`).
-[target.'cfg(not(target_os = "android"))'.dependencies]
-keyring = { version = "3", features = ["linux-native", "apple-native", "windows-native", "crypto-rust"] }
+# OJO: esta sección va al final del fichero. Todo lo que se declare después de un
+# bloque `[target...dependencies]` pertenece a ese bloque, no a `[dependencies]`,
+# y dejaba a Android sin `sqlx`, `futures-util` ni `reqwest`.
 sqlx = { version = "0.9.0", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"] }
 futures-util = "0.3.34"
 reqwest = { version = "0.13.5", features = ["json", "stream", "form", "query"] }
+
+# El llavero no existe en Android: el crate no tiene implementación para esa
+# plataforma y `linux-native` arrastraría el llavero del kernel de Linux, que ahí
+# no está. En Android se usa el almacén de fichero (ver `config::secrets`).
+#
+# Esta es la ÚLTIMA sección del fichero a propósito.
+[target.'cfg(not(target_os = "android"))'.dependencies]
+keyring = { version = "3", features = ["linux-native", "apple-native", "windows-native", "crypto-rust"] }
 
 # Read the optimization guideline for more details:
 # https://tauri.app/concept/size/#cargo-configuration
