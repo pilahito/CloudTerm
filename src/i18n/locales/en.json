@@ -437,6 +437,7 @@
   "seguridad.savedRecovery": "I have saved them",
   "seguridad.scanHint": "Open your authenticator app (Google Authenticator, Microsoft Authenticator, Authy…) and scan this code.",
   "seguridad.scanTitle": "Scan the code",
+  "seguridad.signInFirst": "Sign in with {provider}",
   "seguridad.sixDigitCode": "6-digit code",
   "seguridad.start": "Continue",
   "seguridad.title": "App lock",

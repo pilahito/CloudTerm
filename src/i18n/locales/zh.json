@@ -437,6 +437,7 @@
   "seguridad.savedRecovery": "我已保存",
   "seguridad.scanHint": "打开身份验证器应用（Google Authenticator、Microsoft Authenticator、Authy 等）扫描此二维码。",
   "seguridad.scanTitle": "扫描二维码",
+  "seguridad.signInFirst": "使用 {provider} 登录",
   "seguridad.sixDigitCode": "6 位代码",
   "seguridad.start": "继续",
   "seguridad.title": "应用锁",

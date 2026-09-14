@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useSeguridadStore } from "../../stores/seguridadStore";
+import { useAuthStore } from "../../stores/authStore";
 import { useUiStore } from "../../stores/uiStore";
 import { copyToClipboard } from "../../lib/links";
 import type { Metodo } from "../../lib/seguridad";
@@ -45,6 +46,13 @@ export function SecuritySettings() {
   const error = useSeguridadStore((s) => s.error);
   const cargar = useSeguridadStore((s) => s.cargar);
   const empezarAlta = useSeguridadStore((s) => s.empezarAlta);
+
+  // Cuando el método es un proveedor, hay que iniciar sesión con él **aquí
+  // mismo**: si no, el segundo factor se quedaría como único paso, y eso no es
+  // doble paso. Elegir «Google» y que no pase nada era confuso.
+  const cuenta = useAuthStore((s) => s.account);
+  const iniciarSesion = useAuthStore((s) => s.signIn);
+  const errorAuth = useAuthStore((s) => s.lastSync);
   const confirmarAlta = useSeguridadStore((s) => s.confirmarAlta);
   const cancelarAlta = useSeguridadStore((s) => s.cancelarAlta);
   const quitar = useSeguridadStore((s) => s.quitar);
@@ -75,12 +83,27 @@ export function SecuritySettings() {
   };
 
   const lanzarAlta = async () => {
+    // Con un proveedor, primero el navegador: es el primer factor.
+    if (metodo !== "local") {
+      const proveedor = metodo as "google" | "github";
+      if (cuenta?.provider !== proveedor) {
+        const resultado = await iniciarSesion(proveedor);
+        if (!resultado) {
+          // El motivo ya lo deja el store y se enseña abajo.
+          return;
+        }
+      }
+    }
+
     const ok = await empezarAlta(metodo, usuario, contrasena);
     if (ok) {
       setPaso("escanear");
       setContrasena("");
     }
   };
+
+  /** ¿Hace falta iniciar sesión con el proveedor antes de seguir? */
+  const faltaSesion = metodo !== "local" && cuenta?.provider !== metodo;
 
   const confirmar = async () => {
     const ok = await confirmarAlta(codigo);
@@ -397,6 +420,9 @@ export function SecuritySettings() {
         </p>
 
         {error && <p className="text-[10px] leading-relaxed text-danger">{error}</p>}
+        {!error && faltaSesion && errorAuth && (
+          <p className="text-[10px] leading-relaxed text-danger">{errorAuth}</p>
+        )}
 
         <button
           type="button"
@@ -410,7 +436,9 @@ export function SecuritySettings() {
           )}
         >
           {cargando ? <Loader2 size={11} className="animate-spin" /> : <QrCode size={11} />}
-          {t("seguridad.start")}
+          {faltaSesion
+            ? t("seguridad.signInFirst", { provider: t(`seguridad.method.${metodo}`) })
+            : t("seguridad.start")}
         </button>
       </div>
     </section>
