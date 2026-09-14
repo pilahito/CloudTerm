@@ -43,6 +43,8 @@ src-tauri/target/
 src-tauri/gen/schemas/
 src-tauri/.tauri/
 src-tauri/WixTools/
+dist-release/
+dist-apk/
 
 # ---------------------------------------------------------------------------
 # CloudTerm local data (never commit user credentials)

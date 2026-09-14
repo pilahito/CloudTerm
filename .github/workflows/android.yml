@@ -8,7 +8,13 @@ name: Compilar APK de Android
 # interfaz y para seguir trabajando en la adaptación táctil.
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   apk:
@@ -57,9 +63,25 @@ jobs:
       - name: Compilar el APK
         run: npx tauri android build --apk
 
+      - name: Nombrar el APK
+        shell: bash
+        run: |
+          mkdir -p dist-apk
+          apk=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -n 1)
+          test -n "$apk"
+          cp "$apk" dist-apk/CloudTerm-android-unsigned.apk
+
       - name: Subir el APK
         uses: actions/upload-artifact@v4
         with:
           name: cloudterm-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          path: dist-apk/*.apk
           if-no-files-found: error
+
+      - name: Adjuntar a la release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-apk/*.apk
+          draft: false
+          fail_on_unmatched_files: true
