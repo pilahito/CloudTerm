@@ -76,8 +76,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "CloudTerm ${{ github.ref_name }}"
+          # La etiqueta solo se pasa cuando de verdad se ha empujado una. En una
+          # ejecución manual, `github.ref_name` vale «main» y el flujo intentaba
+          # crear una release con esa etiqueta, que no existe: fallaba al final
+          # después de haber compilado bien. Sin etiqueta, solo compila.
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('CloudTerm {0}', github.ref_name) || '' }}
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.destino }}
