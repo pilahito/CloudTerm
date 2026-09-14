@@ -10,6 +10,7 @@ import { AISettings } from "./AISettings";
 import { AccountSettings } from "./AccountSettings";
 import { LanguageSettings } from "./LanguageSettings";
 import { SecuritySettings } from "./SecuritySettings";
+import { DestinationSettings } from "./DestinationSettings";
 import { EasterEggSettings } from "./EasterEggSettings";
 import { useEasterEggStore } from "../../stores/easterEggStore";
 import { cx } from "../../lib/utils";
@@ -172,6 +173,8 @@ export function Settings() {
               <LanguageSettings />
 
               <AccountSettings />
+
+              <DestinationSettings />
 
               <KnownHostsSettings />
 

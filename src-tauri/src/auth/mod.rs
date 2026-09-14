@@ -15,6 +15,7 @@
 
 pub mod github;
 pub mod google;
+pub mod destinos;
 pub mod local;
 pub mod pkce;
 pub mod totp;
@@ -484,6 +485,22 @@ pub async fn auth_sync_push(
     settings: serde_json::Value,
 ) -> Result<sync::SyncOutcome, String> {
     let stored = read_stored(&app);
+    let destino = destinos::leer(&app);
+    let hosts = current_hosts(&app).await?;
+    let payload = sync::build(hosts, settings)?;
+
+    // Los destinos que no son de nube no necesitan cuenta: se guardan y ya.
+    if !destino.activo.necesita_sesion() {
+        destino.revisar()?;
+        let donde = destinos::subir(&app, &payload, &destino).await?;
+        return Ok(sync::SyncOutcome {
+            provider: format!("{:?}", destino.activo).to_lowercase(),
+            action: "guardada".to_string(),
+            hosts: sync::parse(&payload).map(|b| b.hosts.len()).unwrap_or(0),
+            destination: donde,
+        });
+    }
+
     let account = stored
         .account
         .clone()
@@ -495,8 +512,6 @@ pub async fn auth_sync_push(
         .map_err(|err| format!("no se pudo crear el cliente HTTP: {err}"))?;
 
     let token = access_token(&client, &stored, account.provider).await?;
-    let hosts = current_hosts(&app).await?;
-    let payload = sync::build(hosts, settings)?;
 
     match account.provider {
         AuthProvider::Google => sync::push_drive(&client, &token, &payload).await,
@@ -508,6 +523,20 @@ pub async fn auth_sync_push(
 #[tauri::command]
 pub async fn auth_sync_pull(app: AppHandle) -> Result<RestoreOutcome, String> {
     let stored = read_stored(&app);
+    let destino = destinos::leer(&app);
+
+    // Igual que al subir: los destinos propios no pasan por ninguna cuenta.
+    if !destino.activo.necesita_sesion() {
+        destino.revisar()?;
+        let bruto = destinos::bajar(&app, &destino).await?;
+        let copia = sync::parse(&bruto)?;
+        replace_hosts(&app, &copia.hosts).await?;
+        return Ok(RestoreOutcome {
+            hosts: copia.hosts.len(),
+            settings: copia.settings,
+        });
+    }
+
     let account = stored
         .account
         .clone()

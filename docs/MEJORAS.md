@@ -2208,3 +2208,94 @@ EDITADO src/App.tsx                         (primera vez y repetición)
 EDITADO src/i18n/locales/{es,en,zh}.json    (21 claves nuevas)
 EDITADO 15 ficheros                          (datos personales)
 ```
+
+---
+
+# 22. Elegir dónde va la copia: tu nube o tu servidor
+
+Google Drive ya estaba desde la fase 14, pero eso obligaba a tener cuenta en
+Google o en GitHub. La petición era clara: **que el usuario decida**, y que si
+tiene su propio servidor, pueda usarlo.
+
+## 22.1 Cinco destinos
+
+| Destino | Para quién | Qué pide |
+| --- | --- | --- |
+| **Una carpeta** | Cualquier nube con cliente de escritorio: Dropbox, OneDrive, Mega, Terabox… y cualquier disco | Una ruta |
+| **WebDAV** | Nextcloud, ownCloud, Synology, Box y servidores propios | URL, usuario y contraseña |
+| **Mi servidor** | Tu propio servidor por SSH | Host, puerto, usuario, contraseña y carpeta |
+| **GitHub** | Gist secreto | Sesión iniciada |
+| **Google Drive** | Carpeta privada de la aplicación | Sesión iniciada |
+
+**La carpeta es la opción más lista de todas**, y por eso es la que viene por
+defecto. Si tu nube sincroniza una carpeta —que es como funcionan Dropbox,
+OneDrive, Mega y compañía—, se apunta CloudTerm ahí y ya está. No hay que
+implementar el API de cada servicio ni pedir credenciales a nadie: CloudTerm
+escribe un fichero y la nube hace su trabajo.
+
+Eso responde a «otro sistema de la nube como…» para **cualquier** servicio, no
+solo para los que yo podría haber ido añadiendo uno a uno.
+
+## 22.2 Mi servidor, reutilizando lo que ya había
+
+El destino de SFTP no escribe un cliente nuevo: usa `open_sftp`, la misma
+función que abre el panel de archivos. Eso significa que hereda lo que ya estaba
+resuelto:
+
+- **La clave del servidor se verifica** contra el `known_hosts` de CloudTerm,
+  igual que en una conexión normal. No es una conexión «de confianza» aparte.
+- El **tiempo de espera** y el manejo de errores son los mismos.
+
+Sin carpeta indicada se deja solo el nombre del fichero y el servidor lo
+resuelve contra la carpeta personal: así no hay que adivinar dónde aterriza cada
+sistema.
+
+## 22.3 El botón de probar
+
+Se sube una copia de prueba y se lee de vuelta. Es a propósito: un servidor puede
+aceptar la conexión y **fallar al escribir** —permisos, disco lleno, carpeta
+equivocada—, que es justo el fallo que interesa detectar antes de confiarle tus
+hosts.
+
+Los errores de WebDAV se traducen a algo útil: un 401 dice «usuario o contraseña
+incorrectos», un 404 «la carpeta no existe» y un 507 «no queda espacio». Sin eso,
+los tres se ven igual.
+
+## 22.4 Detalles
+
+- **El fichero se llama igual en los cinco destinos**, así que una copia hecha en
+  una carpeta se restaura desde tu servidor. Era el objetivo desde el principio.
+- **La configuración se guarda con permisos `0600`**, porque dentro van
+  contraseñas de WebDAV y de SFTP.
+- **Una configuración vieja sigue leyéndose**: si falta el puerto, cae a 22; si
+  falta la sección de WebDAV, queda vacía.
+- La carpeta propuesta por defecto es `~/CloudTerm`, para no dejar el campo vacío
+  sin decir nada.
+
+## 22.5 Pruebas (15 nuevas)
+
+- Expansión de `~` y rutas normales.
+- El nombre del fichero es el mismo en los tres destinos propios, y una barra de
+  más no produce una doble barra.
+- La URL de WebDAV no duplica la barra, con o sin barra final y con espacios.
+- El destino por defecto es la carpeta, y no pide sesión.
+- Solo GitHub y Google piden sesión.
+- Validaciones: carpeta vacía, WebDAV sin URL o con `ftp://`, SFTP sin host y sin
+  usuario.
+- El puerto de SFTP cae a 22 si falta.
+- Ida y vuelta por JSON, y lectura de una configuración antigua sin los campos
+  nuevos.
+- Escritura y lectura reales en una carpeta temporal, y el error cuando no hay
+  copia.
+
+## 22.6 Archivos
+
+```
+NUEVO   src-tauri/src/auth/destinos.rs
+NUEVO   src/lib/destinos.ts
+NUEVO   src/components/Settings/DestinationSettings.tsx
+EDITADO src-tauri/src/auth/mod.rs    (subida y bajada despachan por destino)
+EDITADO src-tauri/src/lib.rs         (5 comandos nuevos)
+EDITADO src/components/Settings/Settings.tsx
+EDITADO src/i18n/locales/{es,en,zh}.json   (21 claves nuevas)
+```
