@@ -64,8 +64,11 @@ jobs:
       - name: Dependencias del frontend
         run: npm ci
 
+      # `--nocapture` y sin capturar el código de salida: si el binario de
+      # pruebas revienta en vez de fallar una prueba, el resumen no dice nada y
+      # hace falta ver por dónde iba.
       - name: Pruebas del backend
-        run: cargo test --lib
+        run: cargo test --lib -- --nocapture --test-threads=1
         working-directory: src-tauri
 
       - name: Comprobar tipos
