@@ -20,6 +20,7 @@ interface UiState {
   aboutOpen: boolean;
   donateOpen: boolean;
   updateOpen: boolean;
+  tourOpen: boolean;
   importOpen: boolean;
   newHostOpen: boolean;
   /** Host cuyas propiedades se están editando, o `null` si no hay diálogo. */
@@ -38,6 +39,7 @@ interface UiState {
   setAboutOpen: (open: boolean) => void;
   setDonateOpen: (open: boolean) => void;
   setUpdateOpen: (open: boolean) => void;
+  setTourOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
   setNewHostOpen: (open: boolean) => void;
   setHostSettingsId: (id: string | null) => void;
@@ -55,6 +57,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   aboutOpen: false,
   donateOpen: false,
   updateOpen: false,
+  tourOpen: false,
   importOpen: false,
   newHostOpen: false,
   hostSettingsId: null,
@@ -77,6 +80,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   setAboutOpen: (open) => set({ aboutOpen: open }),
   setDonateOpen: (open) => set({ donateOpen: open }),
   setUpdateOpen: (open) => set({ updateOpen: open }),
+  setTourOpen: (open) => set({ tourOpen: open }),
   setImportOpen: (open) => set({ importOpen: open }),
   setNewHostOpen: (open) => set({ newHostOpen: open }),
   setHostSettingsId: (id) => set({ hostSettingsId: id }),

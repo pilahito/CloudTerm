@@ -134,6 +134,7 @@ export function TitleBar() {
   const setAboutOpen = useUiStore((s) => s.setAboutOpen);
   const setDonateOpen = useUiStore((s) => s.setDonateOpen);
   const setUpdateOpen = useUiStore((s) => s.setUpdateOpen);
+  const setTourOpen = useUiStore((s) => s.setTourOpen);
   const setImportOpen = useUiStore((s) => s.setImportOpen);
   const setNewHostOpen = useUiStore((s) => s.setNewHostOpen);
   const setActiveView = useUiStore((s) => s.setActiveView);
@@ -212,6 +213,7 @@ export function TitleBar() {
       id: "ayuda",
       label: t("titlebar.menu.help"),
       items: [
+        { label: t("tour.replay"), run: () => setTourOpen(true) },
         { label: t("update.check"), run: () => setUpdateOpen(true) },
         { label: t("titlebar.about"), run: () => setAboutOpen(true) },
         { label: t("titlebar.supportProject"), run: () => setDonateOpen(true) },
@@ -324,7 +326,7 @@ export function TitleBar() {
       </button>
 
       {/* Acciones de la derecha */}
-      <div className="flex shrink-0 items-center gap-0.5">
+      <div data-tour="titlebar-actions" className="flex shrink-0 items-center gap-0.5">
         <span className={cx(iconButton, "relative")} title={t("titlebar.notifications", { count: toasts.length })}>
           <Bell size={13} />
           {toasts.length > 0 && (

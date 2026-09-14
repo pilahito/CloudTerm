@@ -85,7 +85,10 @@ export function StatusBar() {
   const connected = sessions > 0;
 
   return (
-    <footer className="flex h-6 shrink-0 items-center gap-1 border-t border-border bg-surface px-2 text-[10px] text-muted select-none">
+    <footer
+      data-tour="statusbar"
+      className="flex h-6 shrink-0 items-center gap-1 border-t border-border bg-surface px-2 text-[10px] text-muted select-none"
+    >
       <Cell
         icon={<Activity size={10} />}
         label={t("statusbar.fps", { fps })}

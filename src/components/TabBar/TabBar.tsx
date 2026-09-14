@@ -61,7 +61,10 @@ export function TabBar() {
     "grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted transition-colors hover:bg-elevated hover:text-text";
 
   return (
-    <div className="flex h-8 shrink-0 items-center gap-1 border-b border-border bg-surface pl-2 pr-1">
+    <div
+      data-tour="tabbar"
+      className="flex h-8 shrink-0 items-center gap-1 border-b border-border bg-surface pl-2 pr-1"
+    >
       <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
         {tabs.map((tab) => (
           <div

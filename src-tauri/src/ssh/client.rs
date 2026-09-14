@@ -597,7 +597,7 @@ mod tests {
     const TEST_PORT: u16 = 2222;
 
     fn test_dir() -> PathBuf {
-        PathBuf::from("std::env::temp_dir().join("cloudterm-sshd-test")")
+        std::env::temp_dir().join("cloudterm-sshd-test")
     }
 
     /// El sshd de prueba es opcional: si no está levantado, la prueba se omite
@@ -713,7 +713,7 @@ mod tests {
         let port: u16 = std::env::var("CLOUDTERM_TEST_PORT")
             .ok()
             .and_then(|p| p.parse().ok())
-            .unwrap_or(2220);
+            .unwrap_or(2222);
 
         let config = std::sync::Arc::new(client::Config {
             inactivity_timeout: Some(Duration::from_secs(120)),
@@ -749,8 +749,8 @@ mod tests {
         let port: u16 = std::env::var("CLOUDTERM_TEST_PORT")
             .ok()
             .and_then(|p| p.parse().ok())
-            .unwrap_or(2220);
-        let username = std::env::var("CLOUDTERM_TEST_USER").unwrap_or_else(|_| "david".into());
+            .unwrap_or(2222);
+        let username = std::env::var("CLOUDTERM_TEST_USER").unwrap_or_else(|_| "demo".into());
 
         let params = SessionParams {
             host: host.clone(),

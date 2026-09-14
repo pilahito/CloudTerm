@@ -547,7 +547,7 @@ mod tests {
     const REMOTE_NAME: &str = ".cloudterm-sftp-test.txt";
 
     fn test_dir() -> PathBuf {
-        PathBuf::from("std::env::temp_dir().join("cloudterm-sshd-test")")
+        std::env::temp_dir().join("cloudterm-sshd-test")
     }
 
     /// Si el sshd de pruebas no está levantado, la prueba se omite en vez de

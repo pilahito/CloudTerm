@@ -22,6 +22,7 @@ import { ImportSshConfig, NewHostDialog, HostSettingsDialog } from "./components
 import { ToastContainer } from "./components/Toast";
 import { useTabStore } from "./stores/tabStore";
 import { useUiStore } from "./stores/uiStore";
+import { useSettingsStore } from "./stores/settingsStore";
 import { useConnectionStore } from "./stores/connectionStore";
 import { useTerminal } from "./hooks/useTerminal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -32,6 +33,7 @@ import { cx } from "./lib/utils";
 import { useDocumentLanguage } from "./i18n";
 import { AuthGate } from "./components/Seguridad/AuthGate";
 import { UpdateDialog } from "./components/Actualizacion";
+import { Onboarding } from "./components/Onboarding";
 import { useSeguridadStore } from "./stores/seguridadStore";
 
 function TerminalView({ tab }: { tab: Tab }) {
@@ -59,6 +61,11 @@ export default function App() {
 
   // El bloqueo se carga al arrancar: hasta saber si hay que pedir credenciales
   // no se sabe si se puede enseñar la aplicación.
+  const tourOpen = useUiStore((s) => s.tourOpen);
+  const setTourOpen = useUiStore((s) => s.setTourOpen);
+  // El tutorial sale una sola vez; desde Ayuda se puede repetir.
+  const mostrarTour = !useSettingsStore((s) => s.settings.onboardingDone);
+
   const cargarSeguridad = useSeguridadStore((s) => s.cargar);
   const bloqueado = useSeguridadStore((s) => s.cargado && s.estado.configurado && !s.desbloqueado);
 
@@ -175,6 +182,13 @@ export default function App() {
       <ImportSshConfig />
       <NewHostDialog />
       <UpdateDialog />
+
+      {/* El tutorial sale la primera vez y se puede repetir desde Ayuda. */}
+      <AnimatePresence>
+        {(mostrarTour || tourOpen) && !bloqueado && (
+          <Onboarding onDone={() => setTourOpen(false)} />
+        )}
+      </AnimatePresence>
       <HostSettingsDialog />
       <ToastContainer />
 

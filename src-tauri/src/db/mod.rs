@@ -591,7 +591,7 @@ mod tests {
 
             sqlx::query(
                 "INSERT INTO hosts (id, name, host, port, username, created_at)
-                 VALUES ('viejo', 'Servidor de prueba', '192.0.2.10', 2220, 'demo', 1)",
+                 VALUES ('viejo', 'Servidor de prueba', '192.0.2.10', 2222, 'demo', 1)",
             )
             .execute(&old)
             .await
@@ -611,8 +611,8 @@ mod tests {
         // El host antiguo hereda el valor por defecto, no cero.
         assert_eq!(stored.timeout_ms, default_timeout_ms());
         assert_eq!(stored.host, "192.0.2.10");
-        assert_eq!(stored.port, 2220);
-        assert_eq!(stored.username, "david");
+        assert_eq!(stored.port, 2222);
+        assert_eq!(stored.username, "demo");
 
         // 3. Reabrir no debe fallar: la migración es idempotente.
         pool.close().await;

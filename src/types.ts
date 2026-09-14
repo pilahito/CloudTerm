@@ -73,6 +73,8 @@ export interface Settings {
    * nuevo sea dejar un fichero en `src/i18n/locales` y nada más.
    */
   language: string;
+  /** Ya se ha visto el tutorial de bienvenida. */
+  onboardingDone: boolean;
 }
 
 export type ToastKind = "info" | "success" | "warning" | "error" | "unlock";

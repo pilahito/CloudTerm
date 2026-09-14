@@ -51,7 +51,10 @@ export function ActivityBar() {
   const hosts = useConnectionStore((s) => s.connections.length);
 
   return (
-    <nav className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-border bg-surface py-2">
+    <nav
+      data-tour="activitybar"
+      className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-border bg-surface py-2"
+    >
       {ITEMS.filter((item) => item.id !== "pixel" || npcsVisible).map((item) => {
         const active = activeView === item.id;
         const label = t(item.labelKey);

@@ -169,7 +169,7 @@ pub fn ahora() -> u64 {
 /// URI `otpauth://` que se codifica en el QR.
 ///
 /// El nombre de la cuenta va como `Emisor:usuario`, que es lo que hace que la
-/// aplicación muestre «CloudTerm (david)» en su lista.
+/// aplicación muestre «CloudTerm (ana)» en su lista.
 pub fn uri_otpauth(emisor: &str, cuenta: &str, secreto: &str) -> String {
     let etiqueta = url::form_urlencoded::byte_serialize(format!("{emisor}:{cuenta}").as_bytes())
         .collect::<String>();
@@ -377,8 +377,8 @@ mod tests {
 
     #[test]
     fn the_uri_carries_everything_the_app_needs() {
-        let uri = uri_otpauth("CloudTerm", "david", "ABCDEFGHIJKLMNOP");
-        assert!(uri.starts_with("otpauth://totp/CloudTerm%3Adavid?"), "{uri}");
+        let uri = uri_otpauth("CloudTerm", "ana", "ABCDEFGHIJKLMNOP");
+        assert!(uri.starts_with("otpauth://totp/CloudTerm%3Aana?"), "{uri}");
         assert!(uri.contains("secret=ABCDEFGHIJKLMNOP"), "{uri}");
         assert!(uri.contains("issuer=CloudTerm"), "{uri}");
         assert!(uri.contains("digits=6"), "{uri}");
@@ -387,7 +387,7 @@ mod tests {
 
     #[test]
     fn the_qr_is_svg() {
-        let uri = uri_otpauth("CloudTerm", "david", &generar_secreto());
+        let uri = uri_otpauth("CloudTerm", "ana", &generar_secreto());
         let svg = qr_svg(&uri).expect("QR");
         assert!(svg.contains("<svg"), "{svg}");
         assert!(svg.len() > 500, "un QR vacío no sirve");

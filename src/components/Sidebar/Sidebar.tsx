@@ -176,7 +176,10 @@ export function Sidebar() {
   const total = connections.length;
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface">
+    <aside
+      data-tour="sidebar"
+      className="flex w-60 shrink-0 flex-col border-r border-border bg-surface"
+    >
       {/* Cabecera */}
       <div className="flex items-center gap-1.5 px-3 py-2.5">
         <span className="grid h-5 w-5 place-items-center rounded bg-accent text-[10px] font-bold text-accentfg">

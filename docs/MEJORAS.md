@@ -713,7 +713,7 @@ EDITADO src/App.tsx                           (nuevo layout de 5 zonas)
 
 ## 5.8 Comando `ssh` en el shell local
 
-Al probar la aplicación se escribió `ssh 192.0.2.10 -p 2220` en la pestaña de
+Al probar la aplicación se escribió `ssh 192.0.2.10 -p 2222` en la pestaña de
 shell local y la respuesta fue `ssh: command not found`. Es un fallo real de
 diseño: `ssh` es **lo primero que teclea cualquiera** en un cliente de terminal, y
 responder «orden no encontrada» deja al usuario sin salida.
@@ -1035,7 +1035,7 @@ EDITADO src/App.tsx
 
 # 10. «No conecta con mi servidor»: tiempo de espera del handshake
 
-Síntoma: `usuario@192.0.2.10:2220` responde al `ping` en 1,3 ms y el puerto
+Síntoma: `usuario@192.0.2.10:2222` responde al `ping` en 1,3 ms y el puerto
 acepta la conexión TCP al instante, pero CloudTerm termina en error.
 
 ## 10.1 Diagnóstico
@@ -1046,7 +1046,7 @@ Se midió la ruta completa contra el servidor real:
 | --- | --- |
 | `ping 192.0.2.10` | 1,3 ms |
 | Puerto 22 | filtrado |
-| Puerto 2220 | TCP abierto en ~1 ms |
+| Puerto 2222 | TCP abierto en ~1 ms |
 | Banner SSH (primer contacto) | **> 35 s** |
 | Banner SSH (contactos siguientes) | 0,0 s |
 | `ssh -o ConnectTimeout=8` | *Connection timed out during banner exchange* |
@@ -1278,9 +1278,9 @@ Un servidor SSH no tiene *una* clave: ofrece varias a la vez. El servidor de
 pruebas, sin ir más lejos, anuncia tres:
 
 ```
-[192.0.2.10]:2220 ssh-ed25519  SHA256:mNYmst3rl2zYpHGMgBtjZOYnnEJE3dKSJCo/KphYDT0
-[192.0.2.10]:2220 ssh-rsa      SHA256:ObGF7kMkWouVJt02JFkEgQHKiKPwUlDByfz+QQzOeU4
-[192.0.2.10]:2220 ecdsa-sha2-nistp256  SHA256:xuRYAhU/PCAqZbB+dkrNilPEXPfX6KJSPks6jbANkMQ
+[192.0.2.10]:2222 ssh-ed25519  SHA256:mNYmst3rl2zYpHGMgBtjZOYnnEJE3dKSJCo/KphYDT0
+[192.0.2.10]:2222 ssh-rsa      SHA256:ObGF7kMkWouVJt02JFkEgQHKiKPwUlDByfz+QQzOeU4
+[192.0.2.10]:2222 ecdsa-sha2-nistp256  SHA256:xuRYAhU/PCAqZbB+dkrNilPEXPfX6KJSPks6jbANkMQ
 ```
 
 Con esa clave de índice, la segunda entrada **machacaba** a la primera al leer el
@@ -1605,7 +1605,7 @@ sospechosos habituales, por orden:
 4. `pam_faillock` sobre un disco lento.
 
 Se comprueba en el servidor mirando `/var/log/auth.log` y el tiempo que tarda
-`su - david` en local.
+`su - usuario` en local.
 
 ## 15.4 La solución, y por qué funciona
 
@@ -1615,7 +1615,7 @@ cuando el host no indica ruta.
 
 ```bash
 ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519
-ssh-copy-id -p 2220 usuario@192.0.2.10    # pide la contraseña y tarda
+ssh-copy-id -p 2222 usuario@192.0.2.10    # pide la contraseña y tarda
 ```
 
 El `ssh-copy-id` sigue sufriendo la espera, porque para instalar la clave hay que
@@ -1694,8 +1694,8 @@ imposible: solo se sabe lo que él cuente. Ahora cada intento queda anotado en
 `<datos>/conexiones.log`:
 
 ```
-[2026-09-14 00:31:02] conectando a 192.0.2.10:2220 como «david» con contraseña
-[2026-09-14 00:32:47]   ✗ 192.0.2.10:2220 falló tras 105142 ms: el servidor no contestó…
+[2026-09-14 00:31:02] conectando a 192.0.2.10:2222 como «demo» con contraseña
+[2026-09-14 00:32:47]   ✗ 192.0.2.10:2222 falló tras 105142 ms: el servidor no contestó…
 ```
 
 Con la hora, el host, el método y cuánto tardó. El fichero se recorta solo
@@ -2122,4 +2122,89 @@ EDITADO src/components/TitleBar/TitleBar.tsx          (Ayuda → Buscar actualiz
 EDITADO src/stores/uiStore.ts · src/App.tsx
 EDITADO src/i18n/locales/{es,en,zh}.json    (19 claves nuevas + `_meta`)
 EDITADO 117 ficheros de código              (marca del autor)
+```
+
+---
+
+# 21. Limpiar los datos personales y el tutorial de bienvenida
+
+Dos cosas antes de publicar: que no salga nada tuyo en el repositorio, y que
+quien lo instale entienda qué tiene delante.
+
+## 21.1 Qué se quitó, y por qué así
+
+El escaneo inicial fue un error mío: busqué en todo el directorio y entraron
+`node_modules` (175 MB) y `src-tauri/target` (17 GB). Se hace con
+`git ls-files`, que es **exactamente lo que se publicaría**, y nada más.
+
+| Dato | Antes | Ahora | Por qué |
+| --- | --- | --- | --- |
+| IP del servidor | `192.0.2.10` | `192.0.2.10` | Rango reservado para documentación (RFC 5737): nunca es una máquina real |
+| Puerto | `2220` | `2222` | El no estándar también identifica |
+| Usuario | `david` | `demo` | — |
+| Host de ejemplo | `Servidor de prueba` | `Servidor de prueba` | — |
+| Correo | `57416155+pilahito@users.noreply.github.com` | `57416155+pilahito@users.noreply.github.com` | El *noreply* de GitHub ya es público y no expone el personal |
+| Rutas | `~/...` | `std::env::temp_dir()` | Además de privado, era un fallo: las pruebas solo corrían en tu equipo |
+
+Ese último es el más interesante: la carpeta de pruebas del sshd estaba clavada
+en tu directorio personal, así que **las pruebas no habrían funcionado en ningún
+otro ordenador**. Limpiar el dato arregló un fallo real.
+
+### Un reemplazo demasiado amplio
+
+Cambiar `2220` por `2222` a lo bruto corrompió **tres *checksums*** de
+`Cargo.lock`: aparecía la secuencia `2220` dentro de hashes. Se detectó al
+revisar el diff, se revirtió el fichero y se dejó el reemplazo donde de verdad
+era un puerto.
+
+Es la lección de siempre con los reemplazos globales: `git diff` antes de dar
+nada por hecho.
+
+## 21.2 El tutorial de bienvenida
+
+Sale **la primera vez** que se abre la aplicación, y se puede repetir desde
+**Ayuda → Ver el tutorial**.
+
+Ocho pasos, y el primero es especial:
+
+1. **Elegir idioma** — español, inglés o chino. Va primero porque todo lo demás
+   tiene que leerse en el idioma de quien lo lee.
+2. Bienvenida.
+3. **Tus servidores** → flecha al árbol de hosts.
+4. **Las vistas** → flecha a la barra de actividad.
+5. **Pestañas** → flecha a la barra de pestañas.
+6. **Tu cuenta** → flecha a los botones de la barra de título.
+7. **El estado** → flecha a la barra de estado.
+8. **Listo.**
+
+Con **Siguiente**, **Atrás**, **Saltar** y puntos de progreso. Se puede navegar
+con las flechas del teclado y salir con `Escape`.
+
+### Cómo apunta la flecha
+
+Cada paso declara un selector. El tutorial busca el elemento, mide dónde está y:
+
+- Oscurece la pantalla **recortando un agujero** sobre el elemento.
+- Le pone un borde de acento, para que se vea qué está señalado.
+- Coloca la tarjeta al lado que corresponda y dibuja un triángulo que las une.
+- **Se recoloca** si la ventana cambia de tamaño.
+
+Los anclajes son `data-tour="sidebar"`, `data-tour="activitybar"`… atributos
+propios, no clases: una clase de Tailwind cambia con el diseño y el tutorial
+dejaría de encontrar nada.
+
+Si el elemento no está —el árbol plegado, por ejemplo—, la tarjeta sale centrada
+sin flecha **en vez de romperse**. Es lo que pasa si alguien cierra la barra
+lateral antes de llegar a ese paso.
+
+## 21.3 Archivos
+
+```
+NUEVO   src/components/Onboarding/Onboarding.tsx
+NUEVO   src/components/Onboarding/index.ts
+EDITADO src/components/{Sidebar,ActivityBar,TabBar,StatusBar,TitleBar}  (anclas)
+EDITADO src/stores/uiStore.ts · src/stores/settingsStore.ts · src/types.ts
+EDITADO src/App.tsx                         (primera vez y repetición)
+EDITADO src/i18n/locales/{es,en,zh}.json    (21 claves nuevas)
+EDITADO 15 ficheros                          (datos personales)
 ```

@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sounds: true,
   copyOnSelect: false,
   language: "es",
+  onboardingDone: false,
 };
 
 interface SettingsState {
