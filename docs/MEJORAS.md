@@ -2139,12 +2139,12 @@ El escaneo inicial fue un error mío: busqué en todo el directorio y entraron
 
 | Dato | Antes | Ahora | Por qué |
 | --- | --- | --- | --- |
-| IP del servidor | `192.0.2.10` | `192.0.2.10` | Rango reservado para documentación (RFC 5737): nunca es una máquina real |
+| IP del servidor | la real | `192.0.2.10` | Rango reservado para documentación (RFC 5737): nunca es una máquina real |
 | Puerto | `2220` | `2222` | El no estándar también identifica |
-| Usuario | `david` | `demo` | — |
+| Usuario | el real | `demo` | — |
 | Host de ejemplo | `Servidor de prueba` | `Servidor de prueba` | — |
-| Correo | `57416155+pilahito@users.noreply.github.com` | `57416155+pilahito@users.noreply.github.com` | El *noreply* de GitHub ya es público y no expone el personal |
-| Rutas | `~/...` | `std::env::temp_dir()` | Además de privado, era un fallo: las pruebas solo corrían en tu equipo |
+| Correo | el personal | el *noreply* de GitHub | Ya es público y no expone el personal |
+| Rutas | la carpeta personal | `std::env::temp_dir()` | Además de privado, era un fallo: las pruebas solo corrían en un equipo |
 
 Ese último es el más interesante: la carpeta de pruebas del sshd estaba clavada
 en tu directorio personal, así que **las pruebas no habrían funcionado en ningún
