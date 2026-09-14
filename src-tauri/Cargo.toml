@@ -44,6 +44,12 @@ base64 = "0.21"
 rand = "0.8"
 url = "2"
 
+# --- segundo factor (TOTP) y contraseñas locales ---
+hmac = "0.12"
+sha1 = "0.10"
+argon2 = "0.6"
+qrcode = "0.14"
+
 # --- hora local para el registro de conexiones ---
 chrono = "0.4"
 

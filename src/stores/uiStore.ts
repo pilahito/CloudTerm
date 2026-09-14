@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { create } from "zustand";
 import type { ToastKind, ToastMessage } from "../types";
 import { uid } from "../lib/utils";
@@ -16,6 +19,7 @@ interface UiState {
   settingsOpen: boolean;
   aboutOpen: boolean;
   donateOpen: boolean;
+  updateOpen: boolean;
   importOpen: boolean;
   newHostOpen: boolean;
   /** Host cuyas propiedades se están editando, o `null` si no hay diálogo. */
@@ -33,6 +37,7 @@ interface UiState {
   setSettingsOpen: (open: boolean) => void;
   setAboutOpen: (open: boolean) => void;
   setDonateOpen: (open: boolean) => void;
+  setUpdateOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
   setNewHostOpen: (open: boolean) => void;
   setHostSettingsId: (id: string | null) => void;
@@ -49,6 +54,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   settingsOpen: false,
   aboutOpen: false,
   donateOpen: false,
+  updateOpen: false,
   importOpen: false,
   newHostOpen: false,
   hostSettingsId: null,
@@ -70,6 +76,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   setAboutOpen: (open) => set({ aboutOpen: open }),
   setDonateOpen: (open) => set({ donateOpen: open }),
+  setUpdateOpen: (open) => set({ updateOpen: open }),
   setImportOpen: (open) => set({ importOpen: open }),
   setNewHostOpen: (open) => set({ newHostOpen: open }),
   setHostSettingsId: (id) => set({ hostSettingsId: id }),

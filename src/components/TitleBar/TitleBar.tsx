@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { useEffect, useRef, useState } from "react";
 import {
   Minus,
@@ -130,6 +133,7 @@ export function TitleBar() {
   const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
   const setAboutOpen = useUiStore((s) => s.setAboutOpen);
   const setDonateOpen = useUiStore((s) => s.setDonateOpen);
+  const setUpdateOpen = useUiStore((s) => s.setUpdateOpen);
   const setImportOpen = useUiStore((s) => s.setImportOpen);
   const setNewHostOpen = useUiStore((s) => s.setNewHostOpen);
   const setActiveView = useUiStore((s) => s.setActiveView);
@@ -208,6 +212,7 @@ export function TitleBar() {
       id: "ayuda",
       label: t("titlebar.menu.help"),
       items: [
+        { label: t("update.check"), run: () => setUpdateOpen(true) },
         { label: t("titlebar.about"), run: () => setAboutOpen(true) },
         { label: t("titlebar.supportProject"), run: () => setDonateOpen(true) },
       ],

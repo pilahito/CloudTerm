@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],

@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck, Trash2, RefreshCw, FileText, AlertTriangle } from "lucide-react";
 import { useUiStore } from "../../stores/uiStore";

@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { KeyRound, Lock, X, ShieldCheck, AlertTriangle } from "lucide-react";

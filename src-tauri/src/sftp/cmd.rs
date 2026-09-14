@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! Línea de comandos del gestor de archivos.
 //!
 //! Por defecto el comando se ejecuta **en el servidor**, por la misma sesión SSH

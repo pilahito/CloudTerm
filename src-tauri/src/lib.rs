@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! CloudTerm — backend Tauri.
 //!
 //! Mapa de módulos:
@@ -12,6 +15,8 @@ pub mod db;
 pub mod sftp;
 pub mod ssh;
 pub mod ai;
+pub mod actualizacion;
+pub mod idiomas;
 pub mod auth;
 
 use serde::Serialize;
@@ -51,6 +56,7 @@ pub fn run() {
         .manage(sftp::SftpManager::default())
         .manage(sftp::editor::EditManager::default())
         .manage(auth::AuthManager::default())
+        .manage(auth::local::SeguridadState::default())
         .invoke_handler(tauri::generate_handler![
             app_info,
             config::load_config,
@@ -125,6 +131,16 @@ pub fn run() {
             auth::auth_sign_out,
             auth::auth_sync_push,
             auth::auth_sync_pull,
+            auth::local::auth_seguridad_estado,
+            auth::local::auth_alta_empezar,
+            auth::local::auth_alta_confirmar,
+            auth::local::auth_desbloquear,
+            auth::local::auth_seguridad_quitar,
+            auth::local::auth_pide_segundo_factor,
+            actualizacion::comprobar_actualizacion,
+            actualizacion::repositorio,
+            idiomas::idiomas_externos,
+            idiomas::idiomas_carpeta,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

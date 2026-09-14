@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! Verificación de claves de servidor contra un fichero `known_hosts` propio.
 //!
 //! Sin esto, `check_server_key` aceptaba cualquier clave y un atacante en medio

@@ -1,4 +1,8 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { useEffect, useRef } from "react";
+import { AnimatePresence } from "motion/react";
 import { Terminal as TerminalIcon, Plus, Command } from "lucide-react";
 import { TitleBar } from "./components/TitleBar";
 import { TabBar } from "./components/TabBar";
@@ -26,6 +30,9 @@ import { useTheme } from "./hooks/useTheme";
 import type { Tab } from "./types";
 import { cx } from "./lib/utils";
 import { useDocumentLanguage } from "./i18n";
+import { AuthGate } from "./components/Seguridad/AuthGate";
+import { UpdateDialog } from "./components/Actualizacion";
+import { useSeguridadStore } from "./stores/seguridadStore";
 
 function TerminalView({ tab }: { tab: Tab }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +56,15 @@ export default function App() {
   // Mantiene el `lang` del documento al día: afecta a fuentes y a lectores de
   // pantalla, y no se actualiza solo.
   useDocumentLanguage();
+
+  // El bloqueo se carga al arrancar: hasta saber si hay que pedir credenciales
+  // no se sabe si se puede enseñar la aplicación.
+  const cargarSeguridad = useSeguridadStore((s) => s.cargar);
+  const bloqueado = useSeguridadStore((s) => s.cargado && s.estado.configurado && !s.desbloqueado);
+
+  useEffect(() => {
+    void cargarSeguridad();
+  }, [cargarSeguridad]);
 
   const loadConnections = useConnectionStore((s) => s.load);
 
@@ -158,8 +174,12 @@ export default function App() {
       <HostKeyDialog />
       <ImportSshConfig />
       <NewHostDialog />
+      <UpdateDialog />
       <HostSettingsDialog />
       <ToastContainer />
+
+      {/* Cubre todo mientras no te hayas identificado. */}
+      <AnimatePresence>{bloqueado && <AuthGate />}</AnimatePresence>
     </div>
   );
 }

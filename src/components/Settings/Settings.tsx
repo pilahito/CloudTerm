@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { motion, AnimatePresence } from "motion/react";
 import { X, RotateCcw, Palette, Type, ShieldCheck } from "lucide-react";
 import { useSettingsStore, THEMES, DEFAULT_SETTINGS } from "../../stores/settingsStore";
@@ -6,6 +9,7 @@ import { KnownHostsSettings } from "./KnownHostsSettings";
 import { AISettings } from "./AISettings";
 import { AccountSettings } from "./AccountSettings";
 import { LanguageSettings } from "./LanguageSettings";
+import { SecuritySettings } from "./SecuritySettings";
 import { EasterEggSettings } from "./EasterEggSettings";
 import { useEasterEggStore } from "../../stores/easterEggStore";
 import { cx } from "../../lib/utils";
@@ -160,6 +164,8 @@ export function Settings() {
                   />
                 </Row>
               </section>
+
+              <SecuritySettings />
 
               <AISettings />
 

@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, ExternalLink, FileText, Loader2 } from "lucide-react";

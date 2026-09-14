@@ -2027,3 +2027,99 @@ EDITADO src/components/Settings/AccountSettings.tsx   (botón a la consola)
 EDITADO src/i18n/locales/{es,en,zh}.json              (7 claves nuevas)
 EDITADO docs/CUENTAS.md
 ```
+
+---
+
+# 20. Actualizar desde GitHub, avisar de traducciones ajenas y firmar el código
+
+Tres peticiones en una: una opción de ayuda para actualizar, un aviso cuando una
+traducción no la firma el creador, y la marca del autor en todo el código.
+
+## 20.1 Actualizar desde GitHub
+
+**Ayuda → Buscar actualizaciones**. Al abrirse consulta la última publicación del
+repositorio y compara versiones.
+
+Lo importante es lo que **no** hace: no descarga ni instala nada por su cuenta.
+Actualizar es una decisión del usuario, así que se le enseñan la versión nueva,
+las notas y dos botones: ver la publicación o descargar el instalador que
+corresponde a su sistema.
+
+Detalles que se resolvieron:
+
+- **Comparación numérica, no de texto.** `1.10.0` es más nueva que `1.9.0`, y
+  comparando cadenas saldría lo contrario. Hay una prueba que lo fija.
+- **Una publicación más antigua no ofrece «actualizar» hacia atrás.** Si tienes
+  una copia de desarrollo por delante, no te manda retroceder.
+- **Sin publicaciones todavía no es un error.** El 404 de GitHub se traduce en
+  «este repositorio aún no tiene ninguna publicación», que es la verdad.
+- **El instalador se elige por sistema**: `.msi` en Windows, `.dmg` en macOS,
+  `.AppImage` en Linux.
+
+## 20.2 Avisar de las traducciones ajenas
+
+Un fichero de idioma es **texto que acaba pintándose en la interfaz**. Si
+cualquiera puede dejar el suyo, cualquiera puede cambiar lo que la aplicación
+dice. No es un ataque exótico: es la consecuencia normal de que las traducciones
+estén abiertas, que es justo lo que se pidió en la fase 17.
+
+La solución no es cerrarlas, sino **decir de quién son**:
+
+- Cada idioma lleva firma: `_meta.author` y `_meta.official`.
+- Los tres de la casa van firmados por `DavidPilahito7` y se marcan como
+  **oficiales**, con una marca verde.
+- Los instalados por el usuario salen con **quién los firma** en ámbar.
+- Al elegir uno no oficial, **salta un aviso antes de activarlo**:
+
+  > «`de`» lo ha traducido *OtraPersona*, que no es el creador de CloudTerm.
+  > ¿Seguro que quieres usarla?
+
+  Con el camino de la carpeta a la vista, para que se pueda comprobar el fichero.
+
+Se puede **instalar un idioma sin recompilar**: se deja el `.json` en
+`~/.config/com.pilahito.cloudterm/idiomas/` y aparece en la lista. Hay un botón
+para abrir esa carpeta.
+
+Los idiomas que vienen con la aplicación **no se pueden pisar** desde esa
+carpeta: un `es.json` suelto ahí se ignora. Si no, la firma no serviría de nada.
+
+Un fichero roto no se descarta en silencio: se lista con su motivo, para que
+quien lo puso sepa por qué no funciona.
+
+## 20.3 La marca del autor
+
+Los 117 ficheros de código llevan ahora la misma cabecera:
+
+```
+CloudTerm · github.com/pilahito/cloudterm
+© 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+```
+
+Adaptada a cada lenguaje: `//` en Rust y TypeScript, `/* */` en CSS, `<!-- -->` en
+HTML. Se respeta el `#!` de los scripts, que tiene que ir en la primera línea.
+
+## 20.4 Pruebas (18 nuevas)
+
+- **Versiones** (5): interpretación con y sin `v`, con sufijos de preestreno y de
+  dos componentes; rechazo de basura; y el orden numérico.
+- **Publicaciones** (5): detección de versión nueva, misma versión e inferior;
+  errores de GitHub; publicación sin etiqueta; y elección del instalador por
+  sistema.
+- **Idiomas** (8): firma del proyecto, traducción ajena marcada con su motivo,
+  fichero sin firma, fichero sin claves, las claves `_meta` fuera del diccionario,
+  JSON roto sin reventar, y que los integrados no se puedan reemplazar.
+
+## 20.5 Archivos
+
+```
+NUEVO   src-tauri/src/actualizacion.rs      (consulta y comparación de versiones)
+NUEVO   src-tauri/src/idiomas.rs            (idiomas instalados y su firma)
+NUEVO   src/lib/actualizacion.ts · src/lib/idiomas.ts
+NUEVO   src/components/Actualizacion/UpdateDialog.tsx
+EDITADO src/i18n/index.ts                   (registro de idiomas en caliente)
+EDITADO src/components/Settings/LanguageSettings.tsx  (firmas y aviso)
+EDITADO src/components/TitleBar/TitleBar.tsx          (Ayuda → Buscar actualizaciones)
+EDITADO src/stores/uiStore.ts · src/App.tsx
+EDITADO src/i18n/locales/{es,en,zh}.json    (19 claves nuevas + `_meta`)
+EDITADO 117 ficheros de código              (marca del autor)
+```

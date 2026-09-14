@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { useEffect, useMemo, useState } from "react";
 import { RefreshCw, Users, Plus, FileDown } from "lucide-react";
 import { useConnectionStore, type HostProbe } from "../../stores/connectionStore";

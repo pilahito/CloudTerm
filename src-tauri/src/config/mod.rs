@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! Ajustes persistentes de CloudTerm + acceso al llavero del sistema.
 //!
 //! Los ajustes se guardan como JSON en el directorio de configuración que

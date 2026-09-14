@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! Sesiones SSH: gestor, comandos de Tauri y eventos hacia el frontend.
 //!
 //! El transporte vive en el submódulo [`client`]; aquí está el contrato con la

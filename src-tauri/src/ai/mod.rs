@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! Transporte real de los proveedores de IA.
 //!
 //! Habla dos dialectos, que es lo que cubre prácticamente todo el mercado:

@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { Terminal, FileDown, Plus, Users, Sparkles, UserRound } from "lucide-react";
 import { useUiStore } from "../../stores/uiStore";
 import { useTabStore } from "../../stores/tabStore";

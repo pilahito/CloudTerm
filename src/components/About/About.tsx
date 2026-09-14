@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { motion, AnimatePresence } from "motion/react";
 import { X, Code2, Mail, Scale, Cpu, Heart, MonitorSmartphone } from "lucide-react";
 import { useUiStore } from "../../stores/uiStore";

@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { useEffect, useState } from "react";
 import { Activity, Server, Plug, ArrowUpDown, Wifi, WifiOff, Clock } from "lucide-react";
 import { useUiStore, type ViewId } from "../../stores/uiStore";

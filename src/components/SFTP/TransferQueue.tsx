@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { ArrowUp, X, CheckCircle2, XCircle, Loader2, Clock, Trash2 } from "lucide-react";
 import { useTransferStore, type Transfer } from "../../stores/transferStore";
 import { formatBytes, cx } from "../../lib/utils";

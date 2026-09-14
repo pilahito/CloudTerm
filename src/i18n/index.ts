@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 /**
  * Traducciones de la interfaz.
  *
@@ -15,13 +18,17 @@
  */
 
 import { useCallback, useEffect } from "react";
+import { create } from "zustand";
 import { useSettingsStore } from "../stores/settingsStore";
 import en from "./locales/en.json";
 import es from "./locales/es.json";
 import zh from "./locales/zh.json";
 
-/** Idioma de la interfaz. */
-export type Language = "es" | "en" | "zh";
+/** Identificador de un idioma. Los integrados están abajo; el resto se instala. */
+export type Language = string;
+
+/** Idiomas que vienen con la aplicación. */
+export type IdiomaIntegrado = "es" | "en" | "zh";
 
 /** Ficha de un idioma, para el selector de ajustes. */
 export interface LanguageInfo {
@@ -30,13 +37,28 @@ export interface LanguageInfo {
   label: string;
   /** Nombre en su propio idioma, que es como lo busca quien lo habla. */
   nativeLabel: string;
+  /** Lo firma el autor de CloudTerm. */
+  oficial: boolean;
+  /** Quién ha traducido este idioma. */
+  autor: string;
+  /** De dónde salió, si es un idioma instalado. */
+  ruta?: string;
 }
 
-/** Idiomas disponibles, en el orden en que se ofrecen. */
+/** Autor del proyecto, el que firma los idiomas integrados. */
+export const AUTOR_OFICIAL = "DavidPilahito7";
+
+/** Idiomas que vienen con la aplicación. */
 export const LANGUAGES: LanguageInfo[] = [
-  { id: "es", label: "Español", nativeLabel: "Español" },
-  { id: "en", label: "Inglés", nativeLabel: "English" },
-  { id: "zh", label: "Chino simplificado", nativeLabel: "简体中文" },
+  { id: "es", label: "Español", nativeLabel: "Español", oficial: true, autor: AUTOR_OFICIAL },
+  { id: "en", label: "Inglés", nativeLabel: "English", oficial: true, autor: AUTOR_OFICIAL },
+  {
+    id: "zh",
+    label: "Chino simplificado",
+    nativeLabel: "简体中文",
+    oficial: true,
+    autor: AUTOR_OFICIAL,
+  },
 ];
 
 /** Idioma que se usa cuando no hay ninguno guardado. */
@@ -44,11 +66,58 @@ export const IDIOMA_POR_DEFECTO: Language = "es";
 
 type Diccionario = Record<string, string>;
 
+/**
+ * Diccionarios cargados.
+ *
+ * Es mutable a propósito: los idiomas instalados por el usuario se añaden en
+ * caliente, sin recompilar.
+ */
 const DICCIONARIOS: Record<Language, Diccionario> = {
   es: es as Diccionario,
   en: en as Diccionario,
   zh: zh as Diccionario,
 };
+
+/** Idiomas instalados además de los integrados. */
+interface RegistroIdiomas {
+  externos: LanguageInfo[];
+  registrar: (info: LanguageInfo, diccionario: Diccionario) => void;
+  limpiar: () => void;
+}
+
+/**
+ * Idiomas instalados, como estado reactivo.
+ *
+ * Vive aquí y no en un store aparte porque el registro de diccionarios y la
+ * lista que ve la interfaz tienen que cambiar a la vez: si se separan, el
+ * selector puede ofrecer un idioma que todavía no sabe traducir.
+ */
+export const useIdiomasStore = create<RegistroIdiomas>((set) => ({
+  externos: [],
+
+  registrar: (info, diccionario) => {
+    DICCIONARIOS[info.id] = diccionario;
+    set((estado) => ({
+      externos: [...estado.externos.filter((i) => i.id !== info.id), info],
+    }));
+  },
+
+  limpiar: () =>
+    set((estado) => {
+      for (const info of estado.externos) delete DICCIONARIOS[info.id];
+      return { externos: [] };
+    }),
+}));
+
+/** Todos los idiomas ofrecidos: los integrados y los instalados. */
+export function idiomasDisponibles(): LanguageInfo[] {
+  return [...LANGUAGES, ...useIdiomasStore.getState().externos];
+}
+
+/** Ficha de un idioma, lo tenga la aplicación o lo haya instalado el usuario. */
+export function fichaDe(id: Language): LanguageInfo | undefined {
+  return idiomasDisponibles().find((info) => info.id === id);
+}
 
 /** Valores que se pueden interpolar en un texto. */
 export type Variables = Record<string, string | number>;

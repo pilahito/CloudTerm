@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! Piezas del flujo PKCE (RFC 7636) y generación de valores aleatorios.
 //!
 //! PKCE permite que una aplicación de escritorio inicie el flujo de código de

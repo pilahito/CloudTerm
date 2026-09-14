@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 //! Inicio de sesión con Google y GitHub, y copia de seguridad de los datos.
 //!
 //! Cada usuario usa **sus propias credenciales de aplicación** (el
@@ -12,7 +15,9 @@
 
 pub mod github;
 pub mod google;
+pub mod local;
 pub mod pkce;
+pub mod totp;
 pub mod sync;
 
 use serde::{Deserialize, Serialize};

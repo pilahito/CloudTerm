@@ -1,3 +1,6 @@
+// CloudTerm · github.com/pilahito/cloudterm
+// © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+
 import { Lock, Heart } from "lucide-react";
 import { useUiStore } from "../../stores/uiStore";
 import { useT } from "../../i18n";
