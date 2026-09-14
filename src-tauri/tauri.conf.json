@@ -50,6 +50,19 @@
       "deb": {
         "depends": []
       }
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "both",
+        "languages": [
+          "Spanish",
+          "English",
+          "SimpChinese"
+        ],
+        "displayLanguageSelector": true,
+        "installerIcon": "icons/icon.ico",
+        "compression": "lzma"
+      }
     }
   }
 }

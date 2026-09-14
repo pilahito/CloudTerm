@@ -170,7 +170,14 @@ export function isCredentialError(message: string): boolean {
  * Reintentar una vez tiene sentido porque suele ser algo transitorio.
  */
 export function isHandshakeTimeout(message: string): boolean {
-  return /tiempo de espera agotado al conectar/i.test(message);
+  // `early eof` es el servidor colgando la conexión: pasa cuando sshd descarta
+  // una conexión nueva por tener demasiadas sin autenticar (`MaxStartups`), o
+  // cuando se queda mudo y termina cerrándola. Es transitorio, así que merece
+  // el mismo reintento que un tiempo de espera agotado.
+  return (
+    /tiempo de espera agotado al conectar/i.test(message) ||
+    /early eof|conexión cerrada|connection reset|broken pipe/i.test(message)
+  );
 }
 
 /**
