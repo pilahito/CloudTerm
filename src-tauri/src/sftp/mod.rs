@@ -546,8 +546,15 @@ mod tests {
     const TEST_PORT: u16 = 2222;
     const REMOTE_NAME: &str = ".cloudterm-sftp-test.txt";
 
+    /// Carpeta con los fixtures del sshd de pruebas.
+    ///
+    /// Se puede apuntar a otra con `CLOUDTERM_TEST_DIR`; por defecto se usa la
+    /// carpeta temporal del sistema, para que las pruebas valgan en cualquier
+    /// equipo sin dejar rastro en el directorio personal.
     fn test_dir() -> PathBuf {
-        std::env::temp_dir().join("cloudterm-sshd-test")
+        std::env::var_os("CLOUDTERM_TEST_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| std::env::temp_dir().join("cloudterm-sshd-test"))
     }
 
     /// Si el sshd de pruebas no está levantado, la prueba se omite en vez de
