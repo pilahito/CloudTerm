@@ -2,213 +2,264 @@
 
 ![CloudTerm](docs/brand/banner-readme.png)
 
-**Terminal SSH/SFTP de escritorio con transferencia de archivos y asistente IA.**
+# CloudTerm
 
-Tauri 2 · React 19 · TypeScript · Rust · Tailwind CSS · SQLite · xterm.js
+**Cliente SSH y SFTP de escritorio.** Terminal, gestor de archivos de doble panel
+y tus servidores como personajes.
 
-[![Licencia: AGPL-3.0](https://img.shields.io/badge/licencia-AGPL--3.0-22d3ee)](./LICENSE)
-[![Pruebas](https://img.shields.io/badge/pruebas-18%20%E2%9C%94-28c878)](docs/DOCUMENTACION.md#13-pruebas)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-facc15)](https://rustup.rs)
-[![Buy Me a Coffee](https://img.shields.io/badge/%E2%98%95-inv%C3%ADtame%20a%20un%20caf%C3%A9-facc15)](https://buymeacoffee.com/pilahito)
+Sin cuenta obligatoria, sin suscripción y sin servidores intermedios: todo se
+queda en tu equipo.
+
+[![Licencia](https://img.shields.io/badge/licencia-AGPL--3.0-blue)](LICENSE)
+[![Idiomas](https://img.shields.io/badge/idiomas-espa%C3%B1ol%20%C2%B7%20english%20%C2%B7%20%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-success)](docs/IDIOMAS.md)
+[![Traducciones](https://github.com/pilahito/cloudterm/actions/workflows/idiomas.yml/badge.svg)](https://github.com/pilahito/cloudterm/actions/workflows/idiomas.yml)
 
 </div>
 
 ---
 
-## Qué es CloudTerm
+## Qué es
 
-CloudTerm es un cliente de terminal moderno para trabajar con servidores remotos:
-sesiones SSH en pestañas, un panel SFTP de doble panel para mover archivos, un
-asistente IA para entender la salida de la consola y credenciales guardadas en el
-llavero del sistema operativo (nunca en texto plano).
+Una aplicación de escritorio para trabajar con servidores remotos: abres una
+sesión, te mueves por sus archivos y editas lo que haga falta, sin salir de la
+misma ventana.
 
-## Modelo de licencia
+Está construida sobre **Tauri 2**, así que el núcleo es **Rust** y la interfaz
+**React**. Eso significa que el SSH no lo hace un programa externo: CloudTerm
+habla el protocolo directamente.
 
-CloudTerm se publica bajo **GNU AGPL-3.0-or-later**, con un modelo dual pensado
-para que el proyecto sea sostenible sin dejar fuera a quien lo usa para aprender o
-para trabajar en sus propios servidores:
+| | |
+|---|---|
+| ![Inicio](docs/capturas/01-inicio.png) | ![Terminal](docs/capturas/02-terminal.png) |
+| La pantalla de inicio | La terminal, con sesiones reales |
 
-| Uso | Coste | Condiciones |
-| --- | --- | --- |
-| **Personal, educativo y proyectos open source** | **Gratis** | Usa, modifica y comparte el código bajo los términos de la AGPL-3.0. |
-| **Empresas y uso comercial interno** | **Licencia comercial** | Escríbenos y acordamos una licencia que se ajuste a tu organización. |
-| **SaaS / reventa como producto** | **Licencia comercial** | La AGPL exige publicar las modificaciones; la licencia comercial lo evita. |
+---
 
-> **¿Usas CloudTerm en tu empresa?** Escribe a **<57416155+pilahito@users.noreply.github.com>** y te
-> enviamos las condiciones. Comprar una licencia comercial es, literalmente, lo
-> que mantiene el proyecto vivo.
+## Qué trae
 
-El texto completo de la licencia está en [`LICENSE`](./LICENSE).
+### Terminal
+Sesiones SSH de verdad, con `xterm.js` y **russh**. Autenticación por contraseña
+o por clave, con passphrase. La ventana se adapta y la sesión se redimensiona
+sola.
 
-## Apoyar el proyecto
+### Archivos
+Panel de **doble panel** —local a la izquierda, servidor a la derecha— con
+arrastrar y soltar, cola de transferencias y barra de progreso.
 
-CloudTerm es gratis para uso personal y seguirá siéndolo. Si te ahorra tiempo,
-un café paga infraestructura, certificados y las horas que le echo:
+**Abre un archivo remoto con tu editor**: se descarga, se abre en Visual Studio
+Code (o el que uses) y **se vuelve a subir cada vez que guardas**. Sin hacer nada
+más.
 
-- ☕ **[Buy Me a Coffee](https://buymeacoffee.com/pilahito)** — donativo puntual, sin registro.
-- 💙 **[PayPal](https://paypal.me/pilahito)** — donativo libre o recurrente.
+### Una consola dentro del gestor
+Escribe `ls -la /var/log` y se ejecuta **en el servidor**. Ponle `!` delante
+—`!uname -a`— y se ejecuta **en tu equipo**. Con historial, colores para la
+salida de error y un símbolo distinto según dónde vaya.
 
-También ayuda muchísimo **compartir el proyecto**, abrir *issues* con errores bien
-descritos y enviar *pull requests*.
+### Tus servidores, ordenados
+Árbol con grupos, búsqueda, estado *en línea* con latencia real y
+**Pixel Agents**: cada servidor es un personaje en una escena isométrica al que
+puedes pulsar para conectarte.
 
-## Características
+La escena no es decorativa: mientras un archivo se mueve, un agente lo lleva de
+un escritorio al otro siguiendo el **progreso real** de la transferencia.
 
-- **Pestañas de terminal** con `xterm.js` y ajuste automático al tamaño de la ventana.
-- **Activity bar y barra de estado** con fps reales, sesiones vivas y cola de transferencias.
-- **Árbol de hosts** con grupos plegables, avatar por host y estado *Online* con latencia.
-- **Pixel Agents**: tus servidores como personajes en una escena isométrica; un clic abre su terminal.
-- **Paleta de comandos** (`Ctrl/Cmd + K`) para ejecutar cualquier acción sin ratón.
-- **Panel SFTP** de doble panel (local ↔ remoto) con drag & drop, cola de transferencias y progreso.
-- **Abrir con tu editor**: los archivos remotos se descargan, se abren en VS Code (o el que uses) y se vuelven a subir al guardar.
-- **Importación de `~/.ssh/config`** con vista previa y detección de duplicados.
-- **Hosts en SQLite** (`sqlx`), no en un fichero de texto.
-- **Asistente IA** para explicar errores, proponer comandos y revisar configuraciones.
-- **Inicio de sesión con Google y GitHub** para guardar hosts y ajustes en tu propia cuenta, sin servidor intermedio.
-- **En español, inglés y chino**, con las traducciones abiertas a cualquiera: [docs/IDIOMAS.md](docs/IDIOMAS.md).
-- **6 temas** (Dark Neon por defecto, Midnight, Dracula, Nord, Solarized Dark, Daylight) en caliente.
-- **Credenciales en el llavero** del SO vía `keyring` (Secret Service, Keychain, Credential Manager).
-- **Ventana sin decoraciones** con barra de título propia adaptada a cada sistema.
+### Paleta de comandos
+`Ctrl/Cmd + K` para llegar a cualquier acción sin soltar el teclado.
 
-## 🎁 Easter Eggs
+### Protegido si quieres
+- **Bloqueo de la aplicación** con cuenta local —nombre y contraseña, sin cuenta
+  en ningún sitio— o con Google y GitHub.
+- **Segundo factor obligatorio**: un código de tu aplicación de autenticación
+  (Google Authenticator, Microsoft Authenticator, Authy…), con **códigos de
+  recuperación** de un solo uso.
+- **Verificación de la clave del servidor** contra un `known_hosts` propio, con
+  aviso si cambia.
+- Las contraseñas van al **llavero del sistema**, nunca a un fichero.
 
-**CloudTerm esconde sorpresas.** Descubre cómo desbloquearlas.
+→ [Cómo funciona la seguridad](docs/SEGURIDAD.md)
 
-No vamos a destriparte nada aquí: parte de la gracia es encontrarlo. Si eres
-desarrollador y quieres añadir uno nuevo, la mecánica completa está en
-[`docs/EASTER-EGGS.md`](./docs/EASTER-EGGS.md) — pero ese documento **sí** lleva
-spoilers.
+### Copia de seguridad donde tú digas
+Tus hosts y ajustes, en el sitio que elijas:
 
-Lo único que te adelantamos: hay algo que solo se desbloquea **apoyando el
-proyecto**. Si aún no lo has visto, prueba por ahí. ☕
+| Destino | Para quién |
+|---|---|
+| **Una carpeta** | Cualquier nube con cliente de escritorio: Dropbox, OneDrive, Mega… |
+| **WebDAV** | Nextcloud, ownCloud, Synology, Box o un servidor propio |
+| **Mi servidor** | Tu servidor por SSH, con la misma verificación de clave |
+| **GitHub** / **Google Drive** | Un gist secreto o la carpeta privada de la app |
 
-## Atajos de teclado
+**Las credenciales no se sincronizan nunca.** Los hosts y los ajustes sí; las
+contraseñas se quedan en cada equipo.
 
-| Atajo | Acción |
-| --- | --- |
-| `Ctrl/Cmd + K` | Paleta de comandos |
-| `Ctrl/Cmd + T` | Nueva pestaña de terminal |
-| `Ctrl/Cmd + W` | Cerrar pestaña activa |
-| `Ctrl/Cmd + B` | Alternar barra lateral |
-| `Ctrl/Cmd + ,` | Ajustes |
-| `Ctrl/Cmd + +` / `-` | Tamaño de fuente de la terminal |
+### En tu idioma
+**Español, inglés y chino simplificado**, y las traducciones están abiertas:
+cualquiera puede añadir un idioma dejando un fichero JSON, sin tocar código. Si
+un idioma no lo firma el autor del proyecto, la aplicación **avisa antes de
+usarlo**.
 
-## Requisitos
+→ [Cómo traducir CloudTerm](docs/IDIOMAS.md)
 
-- **Node.js** 18+ y **npm**
-- **Rust** estable (instalado con [rustup](https://rustup.rs))
-- Dependencias de Tauri 2 para tu sistema:
-  - **Linux (Debian/Ubuntu):** `libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev`
-  - **Linux (Arch):** `webkit2gtk-4.1 base-devel curl wget file openssl libappindicator-gtk3 librsvg`
-  - **macOS:** Xcode Command Line Tools
-  - **Windows:** Microsoft C++ Build Tools + WebView2
+---
 
-## Puesta en marcha
+## Instalación
+
+### Linux
+```bash
+git clone https://github.com/pilahito/cloudterm
+cd cloudterm
+./scripts/instalar.sh
+```
+Deja el binario en `~/.local/bin`, el lanzador en el menú de aplicaciones y los
+iconos en su sitio. Se quita con `./scripts/instalar.sh --quitar`.
+
+También hay `packaging/PKGBUILD` para Arch.
+
+### Windows y macOS
+Los instaladores se generan en cada publicación, en la pestaña
+[**Releases**](https://github.com/pilahito/cloudterm/releases).
+
+### Desde el código
+```bash
+npm install
+npm run tauri build        # instaladores
+npm run tauri dev          # desarrollo
+```
+
+---
+
+## Primeros pasos
+
+La primera vez que la abras, un **tutorial de ocho pasos** te enseña la interfaz:
+empieza preguntándote el idioma y luego va señalando cada parte con una flecha.
+Se puede saltar, y repetir desde **Ayuda → Ver el tutorial**.
+
+Después:
+
+1. **Añade un servidor** con el botón `+` del árbol, o importa tu
+   `~/.ssh/config` de golpe.
+2. **Conéctate** pulsándolo. Si el servidor es nuevo, te enseñará su huella para
+   que la compruebes.
+3. **Abre la vista de archivos** en la barra lateral y arrastra lo que quieras
+   mover.
+
+---
+
+## Cómo está hecho
+
+```
+CloudTerm
+├── src/                    Interfaz (React 19 + TypeScript + Tailwind)
+│   ├── components/         Shell, terminal, archivos, ajustes, tutorial…
+│   ├── stores/             Estado (Zustand): conexiones, pestañas, ajustes…
+│   ├── lib/                Puente con el backend
+│   └── i18n/               Traducciones: es · en · zh
+└── src-tauri/              Núcleo (Rust)
+    └── src/
+        ├── ssh/            Cliente SSH, verificación de clave, registro
+        ├── sftp/           Transferencias, editor externo, consola
+        ├── db/             Hosts en SQLite
+        ├── auth/           Cuentas, segundo factor y destinos de copia
+        ├── ai/             Asistente (Ollama local o DeepSeek)
+        └── actualizacion.rs
+```
+
+**Decisiones que conviene conocer:**
+
+- **El SSH es propio** (`russh`), no un `ssh` externo. Por eso se puede verificar
+  la clave del servidor y dar mensajes de error que se entienden.
+- **Los hosts van en SQLite**, no en un fichero de texto.
+- **Los secretos van al llavero del sistema**; lo que se guarda en disco son
+  hashes, y con permisos `0600`.
+- **La interfaz está traducida por claves**, y el español es la referencia: lo
+  que falte en otro idioma cae al español.
+
+---
+
+## Desarrollo
 
 ```bash
-# 1. Dependencias del frontend
-npm install
-
-# 2. Modo desarrollo (levanta Vite y compila el backend Rust)
-npm run tauri dev
-
-# 3. Build de producción + instaladores
-npm run tauri build
+npm run tauri dev            # aplicación en modo desarrollo
+cargo test --manifest-path src-tauri/Cargo.toml --lib   # pruebas del núcleo
+npx tsc --noEmit             # tipos de la interfaz
+npm run idiomas              # comprobar las traducciones
 ```
 
-El servidor de desarrollo de Vite escucha en <http://localhost:1420>.
+Hay más de **145 pruebas** en el núcleo. Las de conexión real se saltan solas si
+no hay servidor; para ejecutarlas de verdad:
 
-## Estructura del proyecto
+```bash
+./scripts/sshd-prueba.sh     # levanta un sshd de usar y tirar
+cargo test --manifest-path src-tauri/Cargo.toml --lib ssh::
+```
 
+---
+
+## Contribuir
+
+Lo más útil ahora mismo, por orden:
+
+1. **Traducir a tu idioma.** No hace falta saber programar: es un fichero JSON y
+   un script que comprueba que no falte nada. → [IDIOMAS.md](docs/IDIOMAS.md)
+2. **Reportar fallos** con el registro de conexiones adjunto
+   (`~/.local/share/com.pilahito.cloudterm/conexiones.log`): ahí queda cada
+   intento con su hora y cuánto tardó.
+3. **Probar en Windows y macOS.** Solo se ha probado a fondo en Linux.
+
+Antes de proponer un cambio, comprueba que pasa esto:
+
+```bash
+cargo test --manifest-path src-tauri/Cargo.toml --lib
+npx tsc --noEmit
+npm run idiomas
 ```
-CloudTerm/
-├── src/                          # Frontend React + TypeScript
-│   ├── components/
-│   │   ├── ActivityBar/          # Riel de iconos con badge de sesiones vivas
-│   │   ├── TitleBar/             # Menús Archivo/Editar/Ver/Ayuda + controles de ventana
-│   │   ├── Sidebar/              # Árbol de hosts: grupos, avatar, Online, latencia
-│   │   ├── TabBar/               # Pestañas con avatar del host
-│   │   ├── Welcome/              # Pantalla de inicio (Ctrl+K)
-│   │   ├── PixelAgents/          # Escena isométrica: un personaje por host
-│   │   ├── SFTP/                 # Panel dual + cola de transferencias
-│   │   ├── Hosts/                # Nuevo host + importar ~/.ssh/config
-│   │   ├── SshAuth/              # Modal de credenciales
-│   │   ├── CommandPalette/       # Paleta de comandos (Ctrl+K)
-│   │   ├── Settings/ · AI/ · Donate/ · About/ · Toast/
-│   ├── hooks/                    # useTerminal, useFps, usePlatform, useWindowControls…
-│   ├── lib/                      # Puentes con Rust: ssh, sftp, hosts
-│   ├── stores/                   # Estado global con Zustand
-│   ├── styles/themes.css         # 6 temas como variables CSS
-│   ├── App.tsx                   # Layout de 5 zonas
-│   └── main.tsx
-└── src-tauri/                    # Backend Rust
-    ├── capabilities/default.json
-    ├── src/
-    │   ├── ssh/                  # russh: conexión, auth, PTY, shell + gestor
-    │   ├── sftp/                 # SFTP, transferencias y panel local
-    │   ├── db/                   # SQLite (sqlx) + parser de ~/.ssh/config
-    │   ├── config/               # Ajustes persistentes + llavero (keyring)
-    │   ├── lib.rs                # Builder + 35 comandos
-    │   └── main.rs
-    ├── Cargo.toml
-    └── tauri.conf.json
-```
+
+---
 
 ## Documentación
 
 | Documento | Contenido |
-| --- | --- |
-| [`docs/DOCUMENTACION.md`](./docs/DOCUMENTACION.md) | **Referencia técnica completa**: arquitectura, modelo de datos, los 35 comandos de Tauri, eventos, flujos, pruebas y limitaciones |
-| [`docs/MEJORAS.md`](./docs/MEJORAS.md) | Diario de construcción: las 5 fases con sus decisiones y errores |
-| [`docs/IDIOMAS.md`](./docs/IDIOMAS.md) | Cómo traducir CloudTerm y publicar un idioma nuevo |
-| [`docs/CUENTAS.md`](./docs/CUENTAS.md) | Inicio de sesión con Google y GitHub, paso a paso |
-| [`docs/IA-LOCAL.md`](./docs/IA-LOCAL.md) | Cómo está montado el modelo de lenguaje local (Ollama + Qwen3) y cómo cambiarlo |
-| [`docs/EASTER-EGGS.md`](./docs/EASTER-EGGS.md) | ⚠️ **Spoilers**: mecánica de los easter eggs y guía para añadir nuevos |
-| [`docs/PLATAFORMAS.md`](./docs/PLATAFORMAS.md) | Estado real en Linux, Windows, macOS y Android |
-| [`docs/brand/`](./docs/brand/) | Logotipo, banners e iconos, con el script que los genera |
-| [`docs/capturas/`](./docs/capturas/) | Capturas de la aplicación y comparativas con el diseño de referencia |
-
-## Estado del desarrollo
-
-| Área | Estado |
-| --- | --- |
-| Shell de la aplicación: activity bar, menús, árbol, barra de estado | ✅ Funcional |
-| Terminal `xterm.js` con 6 temas (Dark Neon por defecto) | ✅ Funcional |
-| Transporte SSH real (`russh`) con PTY, shell y resize | ✅ Funcional |
-| Autenticación por clave SSH y contraseña, con llavero del sistema | ✅ Funcional |
-| Hosts en SQLite (`sqlx`) con CRUD e importación de `~/.ssh/config` | ✅ Funcional |
-| SFTP real: subir, bajar, mkdir, borrar, renombrar | ✅ Funcional |
-| Panel dual con drag & drop y cola de transferencias | ✅ Funcional |
-| Pixel Agents con latencia real de cada host | ✅ Funcional |
-| Verificación de `known_hosts` | ⚠️ **Pendiente (riesgo de seguridad)** |
-| Copia recursiva de carpetas por SFTP | 🚧 Pendiente |
-| Cancelar / reanudar transferencias | 🚧 Pendiente |
-| FTP/FTPS con `suppaftp` | 🚧 Pendiente |
-| Verificación de claves de servidor (`known_hosts` con confirmación) | ✅ Funcional |
-| Transporte de IA real (Ollama y compatible con OpenAI, en streaming) | ✅ Funcional |
-| Pixel Agents animado (respiración, tecleo, latencia) | ✅ Funcional |
-| Easter eggs con desbloqueo por donativo y vista de configuración | ✅ Funcional |
-| Compilación para Windows y macOS | 🟡 Preparada, sin verificar |
-| Compilación para Android | 🔴 Experimental |
-| Firma y notarización de binarios | 🚧 Pendiente |
-
-El detalle de cada punto, con el porqué de las decisiones, está en
-[`docs/DOCUMENTACION.md`](./docs/DOCUMENTACION.md).
-
-## Contribuir
-
-1. Haz un fork y crea una rama: `git checkout -b feat/mi-mejora`.
-2. Sigue el estilo del código existente (Prettier + `rustfmt`).
-3. Abre un pull request describiendo el *qué* y el *por qué*.
-
-Al enviar una contribución aceptas que se distribuya bajo la AGPL-3.0 y que el
-mantenedor pueda ofrecerla también bajo licencia comercial.
-
-## Contacto
-
-**57416155+pilahito@users.noreply.github.com** — soporte, licencias comerciales y colaboraciones.
+|---|---|
+| [DOCUMENTACION.md](docs/DOCUMENTACION.md) | Referencia técnica: arquitectura, datos, comandos y eventos |
+| [MEJORAS.md](docs/MEJORAS.md) | Diario de construcción, con las decisiones y los errores |
+| [SEGURIDAD.md](docs/SEGURIDAD.md) | Bloqueo, segundo factor y qué protege de verdad |
+| [CUENTAS.md](docs/CUENTAS.md) | Inicio de sesión con Google y GitHub |
+| [IDIOMAS.md](docs/IDIOMAS.md) | Cómo traducir y publicar un idioma |
+| [PLATAFORMAS.md](docs/PLATAFORMAS.md) | Estado real en cada sistema, sin adornos |
+| [CHANGELOG.md](CHANGELOG.md) | Qué cambió en cada versión |
 
 ---
 
-<div align="center">
-<sub>© pilahito · CloudTerm se distribuye bajo GNU AGPL-3.0-or-later.</sub>
-</div>
+## Lo que todavía no está
+
+Dicho claro, para que nadie se lleve una sorpresa:
+
+- **Android no compila.** El llavero que usa el proyecto no soporta esa
+  plataforma y el proyecto Android no está generado. Es un trabajo pendiente, no
+  un ajuste.
+- **Windows y macOS no se han probado** en un equipo real. Compilan, pero eso no
+  es lo mismo que funcionar.
+- **La copia es de hosts y ajustes**, no de credenciales.
+- **Los mensajes del núcleo** están en español; los más comunes se traducen en la
+  interfaz.
+- **Faltan** la copia recursiva de carpetas y cancelar o reanudar transferencias.
+
+---
+
+## Apoyar el proyecto
+
+CloudTerm es libre y lo seguirá siendo. Si te resulta útil:
+
+- ☕ [Buy Me a Coffee](https://buymeacoffee.com/pilahito)
+- 💙 [PayPal](https://paypal.me/pilahito)
+
+Y si lo usas en una empresa, escríbeme: hay licencia comercial para quien la
+necesite.
+
+---
+
+## Licencia
+
+**AGPL-3.0-or-later**. Puedes usarlo, estudiarlo, modificarlo y redistribuirlo;
+si ofreces una versión modificada como servicio, tienes que publicar los cambios.
+
+© 2026 **DavidPilahito7** · [github.com/pilahito](https://github.com/pilahito)

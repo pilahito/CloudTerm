@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Cómo traducir CloudTerm
+    url: https://github.com/pilahito/cloudterm/blob/main/docs/IDIOMAS.md
+    about: Guía paso a paso, sin necesidad de saber programar
+  - name: Documentación
+    url: https://github.com/pilahito/cloudterm/tree/main/docs
+    about: Arquitectura, seguridad, cuentas y estado en cada plataforma
