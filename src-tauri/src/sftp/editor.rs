@@ -597,10 +597,21 @@ mod tests {
         }
     }
 
+    /// La detección no debe dar por hecho el sistema.
+    ///
+    /// Antes se comprobaba que `sh` existiera solo en Unix, y eso es falso: en
+    /// Windows los ejecutores de GitHub traen Git Bash, así que `sh.exe` está en
+    /// el PATH. La prueba daba por buena una suposición sobre la plataforma en
+    /// vez de sobre el código.
     #[test]
-    fn detection_matches_the_path_lookup() {
-        // `sh` existe en cualquier sistema tipo Unix; `no-existe-jamas` no.
-        assert_eq!(en_path("sh"), cfg!(unix));
-        assert!(!en_path("no-existe-jamas-12345"));
+    fn detection_finds_what_exists_and_not_what_does_not() {
+        assert!(
+            !en_path("no-existe-jamas-12345"),
+            "un nombre inventado no puede encontrarse"
+        );
+        assert!(
+            !en_path("cloudterm-programa-que-no-existe.exe"),
+            "tampoco con extensión"
+        );
     }
 }
