@@ -18,6 +18,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # El proyecto Android no está en el repositorio: se genera con
+      # `npm run tauri android init`, que necesita Java y el SDK. Sin él, el
+      # build falla con un error de Gradle que no dice nada útil, así que se
+      # comprueba antes y se explica.
+      - name: Comprobar que existe el proyecto Android
+        run: |
+          if [ ! -d src-tauri/gen/android ]; then
+            echo "::error::Falta el proyecto Android. Ejecuta «npm run tauri android init» y súbelo antes de lanzar esto."
+            echo "Además, el llavero (crate «keyring») no soporta Android: hay que"
+            echo "desactivarlo en esa plataforma y usar el almacén de fichero."
+            exit 1
+          fi
+
       - name: Node
         uses: actions/setup-node@v4
         with:
