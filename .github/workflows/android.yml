@@ -1,0 +1,65 @@
+name: Compilar APK de Android
+
+# Android necesita el SDK y el NDK, que no vienen con la máquina: por eso se
+# compila aquí y no en local.
+#
+# El APK resultante es **experimental**: CloudTerm usa PTY y SFTP, y en Android
+# el backend todavía no tiene implementación de terminal. Sirve para ver la
+# interfaz y para seguir trabajando en la adaptación táctil.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-22.04
+    name: APK
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: SDK de Android
+        uses: android-actions/setup-android@v3
+
+      - name: NDK de Android
+        run: |
+          sdkmanager "ndk;27.0.12077973"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/27.0.12077973" >> "$GITHUB_ENV"
+
+      - name: Rust con los destinos de Android
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Caché de Cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - run: npm ci
+
+      - name: Inicializar el proyecto Android
+        run: npx tauri android init
+
+      - name: Compilar el APK
+        run: npx tauri android build --apk
+
+      - name: Subir el APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudterm-apk
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error

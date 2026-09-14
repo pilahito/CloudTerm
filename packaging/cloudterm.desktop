@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=CloudTerm
+GenericName=Terminal SSH/SFTP
+Comment=Cliente SSH y SFTP de escritorio con Pixel Agents
+Exec=/usr/bin/cloudterm %U
+Icon=cloudterm
+Terminal=false
+Categories=Network;RemoteAccess;
+Keywords=ssh;sftp;terminal;shell;remote;servidor;
+StartupNotify=true
+StartupWMClass=cloudterm

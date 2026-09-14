@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------------------------------------------------------------------
+   Base shell
+   -------------------------------------------------------------------------- */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background-color: rgb(var(--ct-bg));
+  color: rgb(var(--ct-text));
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The whole chrome is app-like: no text selection except where wanted. */
+#root {
+  user-select: none;
+}
+
+input,
+textarea,
+[data-selectable] {
+  user-select: text;
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbars
+   -------------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--ct-border)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--ct-border));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--ct-muted));
+  background-clip: content-box;
+}
+
+/* --------------------------------------------------------------------------
+   Focus ring
+   -------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid rgb(var(--ct-accent));
+  outline-offset: 1px;
+}
+
+/* --------------------------------------------------------------------------
+   xterm.js integration
+   -------------------------------------------------------------------------- */
+.ct-terminal-host {
+  height: 100%;
+  width: 100%;
+  padding: 8px 6px 8px 10px;
+  background-color: var(--ct-term-bg);
+}
+
+.ct-terminal-host .xterm {
+  height: 100%;
+}
+
+.ct-terminal-host .xterm-viewport {
+  background-color: transparent !important;
+}
+
+/* Tauri drag regions must not swallow clicks on interactive children. */
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] a {
+  -webkit-app-region: no-drag;
+}

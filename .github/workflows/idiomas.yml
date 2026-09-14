@@ -1,0 +1,33 @@
+name: Traducciones
+
+# Se ejecuta cuando alguien propone una traducción. El objetivo es que una
+# traducción a medias (una clave que falta, un marcador `{asi}` perdido) no
+# llegue a `main`, sin obligar a nadie a instalar nada para contribuir.
+on:
+  push:
+    paths:
+      - "src/i18n/locales/**"
+      - "src/i18n/index.ts"
+      - "scripts/validar-idiomas.mjs"
+      - ".github/workflows/idiomas.yml"
+  pull_request:
+    paths:
+      - "src/i18n/locales/**"
+      - "src/i18n/index.ts"
+      - "scripts/validar-idiomas.mjs"
+  workflow_dispatch:
+
+jobs:
+  validar:
+    name: Comprobar traducciones
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # El script solo usa módulos de Node, así que no hace falta `npm install`.
+      - name: Validar los ficheros de idioma
+        run: node scripts/validar-idiomas.mjs

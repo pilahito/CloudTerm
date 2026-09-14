@@ -1,0 +1,83 @@
+name: Compilar escritorio
+
+# Genera los instaladores de Windows, macOS y Linux.
+# Se lanza al empujar una etiqueta «v*» o a mano desde la pestaña Actions.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  compilar:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sistema: macos-latest
+            destino: aarch64-apple-darwin
+          - sistema: macos-latest
+            destino: x86_64-apple-darwin
+          - sistema: ubuntu-22.04
+            destino: x86_64-unknown-linux-gnu
+          - sistema: windows-latest
+            destino: x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.sistema }}
+    name: ${{ matrix.destino }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.destino }}
+
+      - name: Caché de Cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      # Tauri 2 necesita webkit2gtk-4.1 y libsoup3.
+      - name: Dependencias de Linux
+        if: matrix.sistema == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            build-essential \
+            curl wget file \
+            libxdo-dev \
+            libssl-dev
+
+      - name: Dependencias del frontend
+        run: npm ci
+
+      - name: Pruebas del backend
+        run: cargo test --lib
+        working-directory: src-tauri
+
+      - name: Comprobar tipos
+        run: npx tsc --noEmit
+
+      - name: Compilar y publicar
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "CloudTerm ${{ github.ref_name }}"
+          releaseDraft: true
+          prerelease: false
+          args: --target ${{ matrix.destino }}

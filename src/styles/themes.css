@@ -1,0 +1,229 @@
+/* ==========================================================================
+   CloudTerm — themes.css
+   Every theme is a set of RGB triplets. Components consume them through
+   Tailwind tokens (see tailwind.config.js) so switching a theme is just a
+   matter of setting `data-theme` on <html>.
+   ========================================================================== */
+
+:root,
+[data-theme="neon"] {
+  /* Dark Neon — negro azulado con acentos cian/teal. Tema por defecto.
+     Paleta afinada con el mockup de referencia: fondo casi negro con tinte
+     azul, superficies escalonadas y cian como color de acción. */
+  --ct-bg: 7 11 17;
+  --ct-surface: 13 18 27;
+  --ct-elevated: 20 27 39;
+  --ct-border: 31 42 57;
+  --ct-muted: 108 124 148;
+  --ct-text: 226 236 248;
+  --ct-accent: 34 211 238;
+  --ct-accent-fg: 4 10 16;
+  --ct-danger: 248 81 73;
+  --ct-success: 40 200 120;
+  --ct-warning: 250 204 21;
+
+  /* terminal palette */
+  --ct-term-bg: #05080d;
+  --ct-term-fg: #dbe7f5;
+  --ct-term-cursor: #22d3ee;
+  --ct-term-selection: #14344a;
+  --ct-term-black: #0b1119;
+  --ct-term-red: #ff5f57;
+  --ct-term-green: #28c878;
+  --ct-term-yellow: #facc15;
+  --ct-term-blue: #38bdf8;
+  --ct-term-magenta: #f472b6;
+  --ct-term-cyan: #22d3ee;
+  --ct-term-white: #c3d0e0;
+  --ct-term-bright-black: #3a4a5e;
+  --ct-term-bright-red: #ff8a80;
+  --ct-term-bright-green: #6ee7a8;
+  --ct-term-bright-yellow: #fde68a;
+  --ct-term-bright-blue: #7dd3fc;
+  --ct-term-bright-magenta: #f9a8d4;
+  --ct-term-bright-cyan: #67e8f9;
+  --ct-term-bright-white: #ffffff;
+}
+
+[data-theme="midnight"] {
+  --ct-bg: 9 12 20;
+  --ct-surface: 15 20 32;
+  --ct-elevated: 22 29 45;
+  --ct-border: 38 48 70;
+  --ct-muted: 122 138 168;
+  --ct-text: 226 233 245;
+  --ct-accent: 88 166 255;
+  --ct-accent-fg: 6 10 18;
+  --ct-danger: 248 81 73;
+  --ct-success: 63 185 120;
+  --ct-warning: 230 180 80;
+
+  /* terminal palette */
+  --ct-term-bg: #0b0f18;
+  --ct-term-fg: #dbe4f3;
+  --ct-term-cursor: #58a6ff;
+  --ct-term-selection: #1f3350;
+  --ct-term-black: #12161f;
+  --ct-term-red: #f85149;
+  --ct-term-green: #3fb950;
+  --ct-term-yellow: #d29922;
+  --ct-term-blue: #58a6ff;
+  --ct-term-magenta: #bc8cff;
+  --ct-term-cyan: #39c5cf;
+  --ct-term-white: #b1bac4;
+  --ct-term-bright-black: #3d444d;
+  --ct-term-bright-red: #ff7b72;
+  --ct-term-bright-green: #56d364;
+  --ct-term-bright-yellow: #e3b341;
+  --ct-term-bright-blue: #79c0ff;
+  --ct-term-bright-magenta: #d2a8ff;
+  --ct-term-bright-cyan: #56d4dd;
+  --ct-term-bright-white: #f0f6fc;
+}
+
+[data-theme="dracula"] {
+  --ct-bg: 30 31 41;
+  --ct-surface: 40 42 54;
+  --ct-elevated: 52 55 70;
+  --ct-border: 68 71 90;
+  --ct-muted: 139 143 168;
+  --ct-text: 248 248 242;
+  --ct-accent: 189 147 249;
+  --ct-accent-fg: 30 31 41;
+  --ct-danger: 255 85 85;
+  --ct-success: 80 250 123;
+  --ct-warning: 241 250 140;
+
+  --ct-term-bg: #282a36;
+  --ct-term-fg: #f8f8f2;
+  --ct-term-cursor: #f8f8f2;
+  --ct-term-selection: #44475a;
+  --ct-term-black: #21222c;
+  --ct-term-red: #ff5555;
+  --ct-term-green: #50fa7b;
+  --ct-term-yellow: #f1fa8c;
+  --ct-term-blue: #bd93f9;
+  --ct-term-magenta: #ff79c6;
+  --ct-term-cyan: #8be9fd;
+  --ct-term-white: #f8f8f2;
+  --ct-term-bright-black: #6272a4;
+  --ct-term-bright-red: #ff6e6e;
+  --ct-term-bright-green: #69ff94;
+  --ct-term-bright-yellow: #ffffa5;
+  --ct-term-bright-blue: #d6acff;
+  --ct-term-bright-magenta: #ff92df;
+  --ct-term-bright-cyan: #a4ffff;
+  --ct-term-bright-white: #ffffff;
+}
+
+[data-theme="nord"] {
+  --ct-bg: 46 52 64;
+  --ct-surface: 59 66 82;
+  --ct-elevated: 67 76 94;
+  --ct-border: 76 86 106;
+  --ct-muted: 143 156 178;
+  --ct-text: 236 239 244;
+  --ct-accent: 136 192 208;
+  --ct-accent-fg: 46 52 64;
+  --ct-danger: 191 97 106;
+  --ct-success: 163 190 140;
+  --ct-warning: 235 203 139;
+
+  --ct-term-bg: #2e3440;
+  --ct-term-fg: #d8dee9;
+  --ct-term-cursor: #d8dee9;
+  --ct-term-selection: #434c5e;
+  --ct-term-black: #3b4252;
+  --ct-term-red: #bf616a;
+  --ct-term-green: #a3be8c;
+  --ct-term-yellow: #ebcb8b;
+  --ct-term-blue: #81a1c1;
+  --ct-term-magenta: #b48ead;
+  --ct-term-cyan: #88c0d0;
+  --ct-term-white: #e5e9f0;
+  --ct-term-bright-black: #4c566a;
+  --ct-term-bright-red: #bf616a;
+  --ct-term-bright-green: #a3be8c;
+  --ct-term-bright-yellow: #ebcb8b;
+  --ct-term-bright-blue: #81a1c1;
+  --ct-term-bright-magenta: #b48ead;
+  --ct-term-bright-cyan: #8fbcbb;
+  --ct-term-bright-white: #eceff4;
+}
+
+[data-theme="solarized"] {
+  --ct-bg: 0 43 54;
+  --ct-surface: 7 54 66;
+  --ct-elevated: 11 66 80;
+  --ct-border: 20 82 96;
+  --ct-muted: 131 148 150;
+  --ct-text: 253 246 227;
+  --ct-accent: 38 139 210;
+  --ct-accent-fg: 253 246 227;
+  --ct-danger: 220 50 47;
+  --ct-success: 133 153 0;
+  --ct-warning: 181 137 0;
+
+  --ct-term-bg: #002b36;
+  --ct-term-fg: #93a1a1;
+  --ct-term-cursor: #93a1a1;
+  --ct-term-selection: #073642;
+  --ct-term-black: #073642;
+  --ct-term-red: #dc322f;
+  --ct-term-green: #859900;
+  --ct-term-yellow: #b58900;
+  --ct-term-blue: #268bd2;
+  --ct-term-magenta: #d33682;
+  --ct-term-cyan: #2aa198;
+  --ct-term-white: #eee8d5;
+  --ct-term-bright-black: #002b36;
+  --ct-term-bright-red: #cb4b16;
+  --ct-term-bright-green: #586e75;
+  --ct-term-bright-yellow: #657b83;
+  --ct-term-bright-blue: #839496;
+  --ct-term-bright-magenta: #6c71c4;
+  --ct-term-bright-cyan: #93a1a1;
+  --ct-term-bright-white: #fdf6e3;
+}
+
+[data-theme="daylight"] {
+  --ct-bg: 246 248 250;
+  --ct-surface: 255 255 255;
+  --ct-elevated: 255 255 255;
+  --ct-border: 214 222 232;
+  --ct-muted: 106 118 137;
+  --ct-text: 22 30 43;
+  --ct-accent: 9 105 218;
+  --ct-accent-fg: 255 255 255;
+  --ct-danger: 207 34 46;
+  --ct-success: 26 127 55;
+  --ct-warning: 154 103 0;
+
+  --ct-term-bg: #ffffff;
+  --ct-term-fg: #24292f;
+  --ct-term-cursor: #0969da;
+  --ct-term-selection: #cfe3ff;
+  --ct-term-black: #24292f;
+  --ct-term-red: #cf222e;
+  --ct-term-green: #1a7f37;
+  --ct-term-yellow: #9a6700;
+  --ct-term-blue: #0969da;
+  --ct-term-magenta: #8250df;
+  --ct-term-cyan: #1b7c83;
+  --ct-term-white: #6e7781;
+  --ct-term-bright-black: #57606a;
+  --ct-term-bright-red: #a40e26;
+  --ct-term-bright-green: #1a7f37;
+  --ct-term-bright-yellow: #7d4e00;
+  --ct-term-bright-blue: #0550ae;
+  --ct-term-bright-magenta: #6639ba;
+  --ct-term-bright-cyan: #3192aa;
+  --ct-term-bright-white: #24292f;
+}
+
+/* Respect the OS preference when the user has not picked a theme yet. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+  }
+}
