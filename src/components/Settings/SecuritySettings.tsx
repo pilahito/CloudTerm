@@ -11,9 +11,11 @@ import {
   Check,
   LifeBuoy,
   AlertTriangle,
+  UserRound,
 } from "lucide-react";
 import { useSeguridadStore } from "../../stores/seguridadStore";
 import { useAuthStore } from "../../stores/authStore";
+import { ProviderIcon } from "../Brand";
 import { useUiStore } from "../../stores/uiStore";
 import { copyToClipboard } from "../../lib/links";
 import type { Metodo } from "../../lib/seguridad";
@@ -384,11 +386,17 @@ export function SecuritySettings() {
               onClick={() => setMetodo(opcion)}
               className={cx(
                 BOTON,
+                "gap-1.5",
                 metodo === opcion
                   ? "border-accent bg-accent/15 text-text"
                   : "text-muted hover:text-text",
               )}
             >
+              {opcion === "local" ? (
+                <UserRound size={12} />
+              ) : (
+                <ProviderIcon provider={opcion} size={12} />
+              )}
               {t(`seguridad.method.${opcion}`)}
             </button>
           ))}

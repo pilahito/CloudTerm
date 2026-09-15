@@ -16,6 +16,7 @@ import { useSettingsStore } from "../../stores/settingsStore";
 import { useConnectionStore } from "../../stores/connectionStore";
 import { onDeviceCode, providerLabel, type AuthProvider } from "../../lib/auth";
 import { openExternal } from "../../lib/links";
+import { ProviderIcon } from "../Brand";
 import { cx } from "../../lib/utils";
 import { useT } from "../../i18n";
 
@@ -318,7 +319,9 @@ export function AccountSettings() {
                     {waiting ? (
                       <Loader2 size={11} className="animate-spin" />
                     ) : (
-                      <ExternalLink size={11} />
+                      // La marca del proveedor, no un icono genérico: se ve de
+                      // un vistazo con cuál vas a entrar.
+                      <ProviderIcon provider={provider} size={12} />
                     )}
                     {waiting
                       ? provider === "github"
