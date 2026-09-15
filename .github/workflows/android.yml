@@ -63,8 +63,70 @@ jobs:
       - name: Inicializar el proyecto Android
         run: npx tauri android init
 
-      - name: Compilar el APK
+      # Android NO instala un APK sin firmar: lo rechaza antes de abrirlo. Por
+      # eso el que se publicaba («-unsigned») no arrancaba en el móvil.
+      #
+      # Se firma con un keystore propio si está en los secretos del repositorio
+      # (ANDROID_KEYSTORE, en base64, más ANDROID_KEYSTORE_PASSWORD y
+      # ANDROID_KEY_ALIAS). Si no lo hay, se genera uno desechable para que el
+      # APK se pueda instalar y probar igualmente.
+      #
+      # Diferencia importante: con un keystore desechable, cada compilación
+      # firma distinto y Android no deja actualizar encima — hay que desinstalar
+      # antes. Para publicar de verdad hace falta el keystore fijo en secretos.
+      - name: Preparar la firma
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          DESTINO="src-tauri/gen/android/keystore.jks"
+
+          if [ -n "${KEYSTORE_B64:-}" ]; then
+            echo "  Firmando con el keystore del repositorio."
+            echo "$KEYSTORE_B64" | base64 -d > "$DESTINO"
+            PASS="${KEYSTORE_PASSWORD:?falta ANDROID_KEYSTORE_PASSWORD}"
+            ALIAS="${KEY_ALIAS:?falta ANDROID_KEY_ALIAS}"
+          else
+            echo "  Sin keystore en secretos: se genera uno desechable."
+            echo "  El APK instalará, pero no se podrá actualizar encima."
+            PASS="cloudterm"
+            ALIAS="cloudterm"
+            keytool -genkeypair -v \
+              -keystore "$DESTINO" \
+              -alias "$ALIAS" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$PASS" -keypass "$PASS" \
+              -dname "CN=CloudTerm, OU=CloudTerm, O=CloudTerm, L=., S=., C=ES" >/dev/null 2>&1
+          fi
+
+          cat > src-tauri/gen/android/keystore.properties <<EOF
+          storeFile=keystore.jks
+          storePassword=$PASS
+          keyAlias=$ALIAS
+          keyPassword=$PASS
+          EOF
+
+      - name: Compilar el APK firmado
         run: npx tauri android build --apk
+
+      # Se comprueba que de verdad quedó firmado: si no, el problema vuelve a
+      # aparecer en el móvil sin que nadie se entere.
+      - name: Comprobar que está firmado
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -n 1)
+          test -n "$apk"
+          apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -n 1)"
+          if "$apksigner" verify --print-certs "$apk" >/dev/null 2>&1; then
+            echo "  ✔ El APK está firmado"
+          else
+            echo "::error::El APK salió sin firmar. Android no lo instalará."
+            exit 1
+          fi
 
       - name: Nombrar el APK
         shell: bash
@@ -72,7 +134,7 @@ jobs:
           mkdir -p dist-apk
           apk=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -n 1)
           test -n "$apk"
-          cp "$apk" dist-apk/CloudTerm-android-unsigned.apk
+          cp "$apk" dist-apk/CloudTerm-android.apk
 
       - name: Subir el APK
         uses: actions/upload-artifact@v4
