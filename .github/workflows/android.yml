@@ -37,7 +37,7 @@ jobs:
           java-version: "17"
 
       - name: SDK de Android
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
         with:
           # El paquete legado `tools` ya no existe en el SDK y tumbaba v3.
           packages: platform-tools
