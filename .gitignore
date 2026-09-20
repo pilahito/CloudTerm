@@ -53,3 +53,5 @@ dist-apk/
 *.cloudterm.db-journal
 credentials.json
 known_hosts
+*.jks
+*.b64

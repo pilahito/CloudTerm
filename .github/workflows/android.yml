@@ -137,9 +137,9 @@ if (keystorePropertiesFile.exists()) {\
           test -n "$apk"
           apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -n 1)"
           if "$apksigner" verify --print-certs "$apk" >/dev/null 2>&1; then
-            echo "  ✔ El APK está firmado"
+            echo "  APK firmado correctamente"
           else
-            echo "::error::El APK salió sin firmar. Android no lo instalará."
+            echo "::error::El APK salió sin firmar."
             exit 1
           fi
 
