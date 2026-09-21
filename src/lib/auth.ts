@@ -6,6 +6,7 @@
  *
  * Los tokens viven en el llavero del sistema: aquí solo se manejan los datos
  * públicos de la cuenta y los identificadores de cliente, que no son secretos.
+ * El inicio de sesión abre el navegador (PKCE + 127.0.0.1). No hay código de dispositivo.
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -33,15 +34,6 @@ export interface AuthState {
   hasGithubSecret?: boolean;
 }
 
-/** Lo que hay que enseñarle al usuario para autorizar en GitHub. */
-export interface DeviceCode {
-  deviceCode: string;
-  userCode: string;
-  verificationUri: string;
-  expiresIn: number;
-  interval: number;
-}
-
 export interface SyncOutcome {
   provider: string;
   action: string;
@@ -54,7 +46,6 @@ export interface RestoreOutcome {
   settings: unknown;
 }
 
-/** Nombre legible del proveedor. */
 export function providerLabel(provider: AuthProvider): string {
   return provider === "google" ? "Google" : "GitHub";
 }
@@ -85,22 +76,10 @@ export function authSyncPull(): Promise<RestoreOutcome> {
   return invoke<RestoreOutcome>("auth_sync_pull");
 }
 
-/**
- * Avisa cuando GitHub entrega el código que el usuario debe escribir.
- *
- * Solo lo emite el flujo de GitHub: Google devuelve el control por la
- * redirección al navegador.
- */
-export function onDeviceCode(handler: (code: DeviceCode) => void): Promise<UnlistenFn> {
-  return listen<DeviceCode>("auth://device-code", (event) => handler(event.payload));
-}
-
-/** Avisa cuando la cuenta que tiene la sesión cambia. */
 export function onAuthChanged(handler: (account: Account) => void): Promise<UnlistenFn> {
   return listen<Account>("auth://changed", (event) => handler(event.payload));
 }
 
-/** Avisa cuando se han reemplazado los hosts (por ejemplo al restaurar). */
 export function onHostsChanged(handler: () => void): Promise<UnlistenFn> {
   return listen("hosts://changed", () => handler());
 }
