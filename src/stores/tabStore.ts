@@ -5,6 +5,7 @@ import { create } from "zustand";
 import type { Tab, TabKind } from "../types";
 import { uid } from "../lib/utils";
 import { t } from "../i18n";
+import { sshDisconnect } from "../lib/ssh";
 
 interface TabState {
   tabs: Tab[];
@@ -56,9 +57,16 @@ export const useTabStore = create<TabState>((set, get) => ({
       nextActive = next.length ? next[Math.min(index, next.length - 1)].id : null;
     }
     set({ tabs: next, activeTabId: nextActive });
+    void sshDisconnect(id).catch(() => undefined);
   },
 
-  closeAll: () => set({ tabs: [], activeTabId: null }),
+  closeAll: () => {
+    const ids = get().tabs.map((tab) => tab.id);
+    set({ tabs: [], activeTabId: null });
+    for (const id of ids) {
+      void sshDisconnect(id).catch(() => undefined);
+    }
+  },
 
   setActiveTab: (id) => set({ activeTabId: id }),
 
