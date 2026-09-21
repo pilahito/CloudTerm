@@ -21,6 +21,32 @@ El repo anterior [AdministradorArchivos](https://github.com/pilahito/Administrad
 
 ---
 
+## Vídeos
+
+### Escritorio (Windows / Linux)
+
+[Ver vídeo](https://github.com/pilahito/CloudTerm/raw/main/docs/capturas/ejemplo.mp4)
+· [GIF](docs/capturas/ejemplo.gif)
+
+[![Escritorio](docs/capturas/ejemplo-poster.png)](https://github.com/pilahito/CloudTerm/raw/main/docs/capturas/ejemplo.mp4)
+
+### Android
+
+Grabación de la app nativa (pantalla completa, tema mint).
+
+Para publicarla en este repo: arrastra `docs/videos/android.mp4` desde GitHub
+(Add file → Upload) — el fichero es binario y no cabe por el editor de texto.
+Mientras tanto el APK y las capturas salen de
+[CloudTerm-Android](https://github.com/pilahito/CloudTerm-Android).
+
+Capturas de escritorio de referencia:
+
+| Inicio | Terminal | Pixel Agents |
+| --- | --- | --- |
+| ![inicio](docs/capturas/01-inicio.png) | ![terminal](docs/capturas/02-terminal.png) | ![agents](docs/capturas/03-pixel-agents.png) |
+
+---
+
 ## Descargar e instalar
 
 Todo sale de **una sola página**: [github.com/pilahito/CloudTerm/releases](https://github.com/pilahito/CloudTerm/releases)
