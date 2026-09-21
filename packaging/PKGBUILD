@@ -13,7 +13,7 @@
 #       --transform 's,^,cloudterm-0.1.0/,' -czf cloudterm-0.1.0.tar.gz -C .. .
 
 pkgname=cloudterm
-pkgver=1.0.0
+pkgver=1.0.4
 pkgrel=1
 pkgdesc="Cliente SSH/SFTP de escritorio con panel de transferencias y Pixel Agents"
 arch=('x86_64' 'aarch64')

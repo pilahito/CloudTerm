@@ -1,6 +1,6 @@
 [package]
 name = "cloudterm"
-version = "1.0.0"
+version = "1.0.4"
 description = "CloudTerm — cliente de terminal SSH/SFTP con paneles de transferencia e IA"
 authors = ["pilahito <57416155+pilahito@users.noreply.github.com>"]
 edition = "2021"

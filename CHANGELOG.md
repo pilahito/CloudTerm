@@ -7,6 +7,10 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+---
+
+## [1.0.4] — 2026-09-21
+
 ### Windows
 
 - El panel local entiende rutas `C:\…`, sube hasta «Este equipo» y lista las unidades.
@@ -24,17 +28,26 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 - Linux genera `.deb` y AppImage con el `.desktop` `Development;Network;TerminalEmulator`.
 - Flujo `.github/workflows/build-installers.yml` (Windows x64, Linux amd64 y arm64).
 
-### Documentación
+### Cuentas
 
-- El vídeo de ejemplo (`CONTEXTO__Estás_construyendo_l.mp4`) vive en
-  `docs/capturas/ejemplo.mp4` y se reproduce en la pantalla de inicio.
+- Google y GitHub se vinculan **abriendo el navegador**. Ya no hay que escribir
+  un código de dispositivo.
 
 ### Terminal y archivos
 
 - La pestaña local abre un intérprete real: PowerShell o `cmd` en Windows, `$SHELL` en Unix.
 - Las carpetas se copian de forma recursiva; una transferencia en curso se puede cancelar.
-- La versión de «Acerca de» y del banner coincide con `1.0.0`.
 - `~/ruta` en Windows usa `USERPROFILE` y el separador del sistema.
+
+### Documentación
+
+- Vídeo de ejemplo en la pantalla de inicio; GIF en el README y en el perfil.
+
+---
+
+## [1.0.3] — 2026-09-20
+
+Instaladores de escritorio y APK de Android en el mismo tag.
 
 ---
 

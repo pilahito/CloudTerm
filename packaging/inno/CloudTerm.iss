@@ -9,7 +9,7 @@
 ; Requiere Inno Setup 6.
 
 #define MyAppName      "CloudTerm"
-#define MyAppVersion   "1.0.0"
+#define MyAppVersion   "1.0.4"
 #define MyAppPublisher "pilahito"
 #define MyAppURL       "https://github.com/pilahito/cloudterm"
 #define MyAppExeName   "cloudterm.exe"
