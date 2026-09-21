@@ -75,9 +75,6 @@ pub fn run() {
             app_info,
             config::load_config,
             config::save_config,
-            // Los comandos del llavero se referencian por su ruta completa:
-            // `#[tauri::command]` genera items ocultos (`__cmd__*`) que no
-            // viajan a través de un `pub use`.
             config::secrets::secrets_set,
             config::secrets::secrets_get,
             config::secrets::secrets_delete,
@@ -162,6 +159,7 @@ pub fn run() {
             auth::destinos::destinos_carpeta_sugerida,
             auth::destinos::destinos_abrir,
             actualizacion::comprobar_actualizacion,
+            actualizacion::descargar_e_instalar,
             actualizacion::repositorio,
             idiomas::idiomas_externos,
             idiomas::idiomas_carpeta,
