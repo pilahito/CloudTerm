@@ -112,6 +112,36 @@ fn auth_budget(connect: Duration) -> Duration {
     }
 }
 
+fn default_pty_modes() -> Vec<(russh::Pty, u32)> {
+    use russh::Pty;
+    vec![
+        (Pty::VINTR, 3),
+        (Pty::VQUIT, 28),
+        (Pty::VERASE, 127),
+        (Pty::VKILL, 21),
+        (Pty::VEOF, 4),
+        (Pty::VSTART, 17),
+        (Pty::VSTOP, 19),
+        (Pty::VSUSP, 26),
+        (Pty::ICRNL, 1),
+        (Pty::IXON, 1),
+        (Pty::IUTF8, 1),
+        (Pty::ISIG, 1),
+        (Pty::ICANON, 1),
+        (Pty::ECHO, 1),
+        (Pty::ECHOE, 1),
+        (Pty::ECHOK, 1),
+        (Pty::IEXTEN, 1),
+        (Pty::ECHOCTL, 1),
+        (Pty::ECHOKE, 1),
+        (Pty::OPOST, 1),
+        (Pty::ONLCR, 1),
+        (Pty::CS8, 1),
+        (Pty::TTY_OP_ISPEED, 38400),
+        (Pty::TTY_OP_OSPEED, 38400),
+    ]
+}
+
 pub async fn open_shell(
     params: &SessionParams,
 ) -> Result<(Handle<ClientHandler>, Channel<ClientMsg>), String> {
@@ -122,12 +152,21 @@ pub async fn open_shell(
         .await
         .map_err(|err| format!("no se pudo abrir el canal de sesión: {err}"))?;
 
+    let modes = default_pty_modes();
+    let term = if params.term.trim().is_empty() {
+        "xterm-256color"
+    } else {
+        params.term.trim()
+    };
+    let cols = params.cols.max(2);
+    let rows = params.rows.max(2);
+
     let pty = channel
-        .request_pty(false, &params.term, params.cols, params.rows, 0, 0, &[])
+        .request_pty(true, term, cols, rows, 0, 0, &modes)
         .await;
     if pty.is_err() {
         let _ = channel
-            .request_pty(false, "xterm", params.cols, params.rows, 0, 0, &[])
+            .request_pty(false, "xterm", cols, rows, 0, 0, &modes)
             .await;
     }
 
