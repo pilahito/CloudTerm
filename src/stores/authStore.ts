@@ -20,7 +20,6 @@ import {
   type Account,
   type AuthConfig,
   type AuthProvider,
-  type DeviceCode,
   type RestoreOutcome,
   type SyncOutcome,
 } from "../lib/auth";
@@ -33,24 +32,18 @@ interface AuthStoreState {
   account: Account | null;
   loaded: boolean;
   hasGithubSecret: boolean;
-  /** Proveedor cuyo inicio de sesión está en curso, si hay alguno. */
   busy: AuthProvider | null;
-  /** Código que el usuario debe escribir en GitHub, mientras dura el flujo. */
-  device: DeviceCode | null;
   syncing: boolean;
-  /** Mensaje del último resultado, para enseñarlo en la vista. */
   lastSync: string | null;
 
   load: () => Promise<void>;
   saveConfig: (config: AuthConfig) => Promise<boolean>;
   signIn: (provider: AuthProvider) => Promise<Account | null>;
   signOut: (provider: AuthProvider) => Promise<void>;
-  setDevice: (device: DeviceCode | null) => void;
   push: (settings: unknown) => Promise<SyncOutcome | null>;
   pull: () => Promise<RestoreOutcome | null>;
 }
 
-/** Texto del error, venga como venga. */
 function messageOf(error: unknown): string {
   if (typeof error === "string") return error;
   if (error instanceof Error) return error.message;
@@ -63,7 +56,6 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   loaded: false,
   hasGithubSecret: false,
   busy: null,
-  device: null,
   syncing: false,
   lastSync: null,
 
@@ -77,7 +69,6 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
         hasGithubSecret: Boolean(state.hasGithubSecret),
       });
     } catch {
-      // Fuera de Tauri (servidor de desarrollo en el navegador) no hay `invoke`.
       set({ loaded: true });
     }
   },
@@ -97,13 +88,13 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   },
 
   signIn: async (provider) => {
-    set({ busy: provider, device: null, lastSync: null });
+    set({ busy: provider, lastSync: null });
     try {
       const account = await authSignIn(provider);
-      set({ account, busy: null, device: null });
+      set({ account, busy: null });
       return account;
     } catch (error) {
-      set({ busy: null, device: null, lastSync: messageOf(error) });
+      set({ busy: null, lastSync: messageOf(error) });
       return null;
     }
   },
@@ -116,8 +107,6 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
       /* si falla, la sesión sigue como estaba */
     }
   },
-
-  setDevice: (device) => set({ device }),
 
   push: async (settings) => {
     set({ syncing: true, lastSync: null });
