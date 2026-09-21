@@ -90,9 +90,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('CloudTerm {0}', github.ref_name) || '' }}
-          releaseBody: "${{ startsWith(github.ref, 'refs/tags/') && 'Instaladores de escritorio: Windows NSIS y Linux deb/AppImage.' || '' }}"
+          tagName: v1.0.5
+          releaseName: CloudTerm 1.0.5
+          releaseBody: |
+            ## CloudTerm 1.0.5
+
+            Instaladores de escritorio con el arreglo SSH de Windows/Linux.
+
+            - SSH keyboard-interactive (2FA/TOTP de servidor)
+            - Resolución IPv4 primero
+            - Fallback de PTY si el servidor no acepta el modo pedido
+            - Windows NSIS (.exe), Linux .deb y AppImage
+
+            APK nativo: https://github.com/pilahito/CloudTerm-Android/releases
           releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.destino }} --bundles ${{ matrix.paquetes }}
