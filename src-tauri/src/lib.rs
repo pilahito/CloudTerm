@@ -8,12 +8,14 @@
 //! * [`config`] — ajustes persistentes de la app y secretos en el llavero del SO.
 //! * [`db`]     — almacén local (JSON sobre disco) para conexiones e historial.
 //! * [`ssh`]    — sesiones SSH y sondeo de hosts (transporte `russh` + `tokio`).
+//! * [`pty`]    — terminal local (PTY en Unix, PowerShell/`cmd` en Windows).
 //! * [`sftp`]   — navegación y transferencia de archivos (`russh-sftp`, `suppaftp`).
 
 pub mod config;
 pub mod db;
 pub mod sftp;
 pub mod ssh;
+pub mod pty;
 pub mod ai;
 pub mod actualizacion;
 pub mod idiomas;
@@ -57,6 +59,18 @@ pub fn run() {
         .manage(sftp::editor::EditManager::default())
         .manage(auth::AuthManager::default())
         .manage(auth::local::SeguridadState::default())
+        .manage(pty::PtyManager::default())
+        .setup(|app| {
+            #[cfg(windows)]
+            {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_shadow(true);
+                }
+            }
+            let _ = app;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             app_info,
             config::load_config,
@@ -93,6 +107,10 @@ pub fn run() {
             ssh::ssh_resize,
             ssh::ssh_disconnect,
             ssh::ssh_sessions,
+            pty::pty_open,
+            pty::pty_write,
+            pty::pty_resize,
+            pty::pty_close,
             sftp::sftp_connect,
             sftp::sftp_disconnect,
             sftp::sftp_list,
@@ -101,6 +119,7 @@ pub fn run() {
             sftp::sftp_rename,
             sftp::sftp_upload,
             sftp::sftp_download,
+            sftp::sftp_cancel,
             sftp::local_home,
             sftp::local_list,
             sftp::local_mkdir,

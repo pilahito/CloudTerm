@@ -12,6 +12,7 @@ import { useSshStore } from "../stores/sshStore";
 import { useTabStore } from "../stores/tabStore";
 import { useConnectionStore } from "../stores/connectionStore";
 import { t } from "../i18n";
+import { guessOs } from "../lib/platform";
 import type { Connection, TabStatus } from "../types";
 import {
   describeSshError,
@@ -27,6 +28,7 @@ import {
   sshWrite,
   type SshAuthSpec,
 } from "../lib/ssh";
+import { onPtyData, onPtyStatus, ptyClose, ptyOpen, ptyResize, ptyWrite } from "../lib/pty";
 
 /** Lee la paleta de terminal del tema activo desde las variables CSS. */
 function readTerminalTheme(): Record<string, string> {
@@ -69,7 +71,7 @@ function banner(term: Terminal, label: string) {
   term.writeln(`${accent} ╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝   ██║   ███████╗██║  ██║██║ ╚═╝ ██║${reset}`);
   term.writeln(`${accent}  ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝    ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝${reset}`);
   term.writeln("");
-  term.writeln(`${dim}  CloudTerm 0.1.0 — ${label}${reset}`);
+  term.writeln(`${dim}  CloudTerm 1.0.0 — ${label}${reset}`);
   term.writeln(`${dim}  ${t("terminal.demoSession")}${reset}`);
   term.writeln(`${dim}  ${t("terminal.bannerConnect")} \x1b[0mssh usuario@host${reset}`);
   term.writeln(
@@ -96,8 +98,8 @@ export interface UseTerminalOptions {
  *   xterm.js decodifica UTF-8 respetando los caracteres multibyte partidos
  *   entre fragmentos. La entrada del usuario viaja a `ssh_write` y los cambios
  *   de tamaño a `ssh_resize`.
- * * **Local** (sin `connection`): un shell de demostración con unos pocos
- *   comandos, útil para probar la interfaz sin servidor.
+ * * **Local** (sin `connection`): PTY real (PowerShell / `$SHELL`). Si el
+ *   sistema no puede abrirlo, cae a un intérprete mínimo de demostración.
  */
 export function useTerminal(
   hostRef: React.RefObject<HTMLDivElement | null>,
@@ -137,6 +139,8 @@ export function useTerminal(
       scrollback,
       allowProposedApi: true,
       convertEol: false,
+      // Solo el shell local de demostración: una sesión SSH es POSIX.
+      windowsMode: !connection && guessOs() === "windows",
       theme: readTerminalTheme(),
     });
 
@@ -164,6 +168,10 @@ export function useTerminal(
       if (connection) {
         void sshResize(sessionId, term.cols, term.rows).catch(() => {
           /* la sesión puede no estar lista todavía */
+        });
+      } else {
+        void ptyResize(sessionId, term.cols, term.rows).catch(() => {
+          /* el PTY puede no estar listo todavía */
         });
       }
     });
@@ -303,8 +311,9 @@ export function useTerminal(
       disposers.push(() => inputSub.dispose());
     } else {
       /* ---------------------------------------------------------------- */
-      /* Modo local (demostración)                                        */
+      /* Modo local: PTY real, demostración si el sistema no puede abrirlo */
       /* ---------------------------------------------------------------- */
+      const startDemo = () => {
       banner(term, label);
 
       let buffer = "";
@@ -519,6 +528,46 @@ export function useTerminal(
         }
       });
       disposers.push(() => inputSub.dispose());
+      };
+
+      void (async () => {
+        try {
+          const [stopData, stopStatus] = await Promise.all([
+            onPtyData((payload) => {
+              if (payload.sessionId !== sessionId) return;
+              term.write(new Uint8Array(payload.data));
+            }),
+            onPtyStatus((payload) => {
+              if (payload.sessionId !== sessionId) return;
+              if (payload.status === "closed") {
+                term.writeln(`\r\n\x1b[38;2;122;127;168m${t("terminal.sessionClosed")}\x1b[0m`);
+              }
+            }),
+          ]);
+          if (disposed) {
+            stopData?.();
+            stopStatus?.();
+            return;
+          }
+          if (stopData) disposers.push(stopData);
+          if (stopStatus) disposers.push(stopStatus);
+
+          await ptyOpen({ sessionId, cols: term.cols, rows: term.rows });
+          if (disposed) {
+            void ptyClose(sessionId).catch(() => undefined);
+            return;
+          }
+
+          const inputSub = term.onData((data) => {
+            void ptyWrite(sessionId, new TextEncoder().encode(data)).catch(() => {
+              /* PTY cerrado */
+            });
+          });
+          disposers.push(() => inputSub.dispose());
+        } catch {
+          startDemo();
+        }
+      })();
     }
 
     return () => {
@@ -529,6 +578,10 @@ export function useTerminal(
       if (connection) {
         void sshDisconnect(sessionId).catch(() => {
           /* ya estaba cerrada */
+        });
+      } else {
+        void ptyClose(sessionId).catch(() => {
+          /* no había PTY */
         });
       }
       term.dispose();

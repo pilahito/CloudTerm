@@ -171,7 +171,7 @@ CloudTerm/
     ├── INFORME-CONSTRUCCION.md
     ├── IA-LOCAL.md           Modelo de lenguaje local (Ollama + DSH)
     ├── brand/               Logotipo, banners e iconos (generados por script)
-    └── capturas/            Capturas y comparativas con el mockup
+    └── capturas/            Capturas, comparativas y vídeo de ejemplo (`ejemplo.mp4`)
 ```
 
 ---

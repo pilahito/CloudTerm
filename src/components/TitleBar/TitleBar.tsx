@@ -86,13 +86,13 @@ function DesktopControls({
   onToggleMaximize: () => void;
 }) {
   const t = useT();
-  const base =
-    variant === "windows"
-      ? "grid h-7 w-11 place-items-center text-muted transition-colors"
-      : "grid h-6 w-9 place-items-center rounded text-muted transition-colors";
+  const win = variant === "windows";
+  const base = win
+    ? "grid h-10 w-[46px] place-items-center text-muted transition-colors"
+    : "grid h-6 w-9 place-items-center rounded text-muted transition-colors";
 
   return (
-    <div className="flex shrink-0 items-center">
+    <div className="flex h-full shrink-0 items-center">
       <button type="button" title={t("titlebar.minimize")} aria-label={t("titlebar.minimize")} onClick={onMinimize} className={cx(base, "hover:bg-elevated hover:text-text")}>
         <Minus size={14} />
       </button>
@@ -110,7 +110,7 @@ function DesktopControls({
         title={t("common.close")}
         aria-label={t("common.close")}
         onClick={onClose}
-        className={cx(base, "hover:bg-danger hover:text-white")}
+        className={cx(base, win ? "hover:bg-[#e81123] hover:text-white" : "hover:bg-danger hover:text-white")}
       >
         <X size={14} />
       </button>
@@ -124,7 +124,7 @@ function DesktopControls({
 
 export function TitleBar() {
   const t = useT();
-  const { os, isMac, modKey, modJoin } = usePlatform();
+  const { os, isMac, isWindows, modKey, modJoin } = usePlatform();
   const { maximized, minimize, toggleMaximize, close } = useWindowControls();
 
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
@@ -240,21 +240,21 @@ export function TitleBar() {
   return (
     <header
       ref={barRef}
-      data-tauri-drag-region
       onDoubleClick={(event) => {
         const target = event.target as HTMLElement;
         if (target.closest("button, input, a, [role='menu']")) return;
         void toggleMaximize();
       }}
       className={cx(
-        "relative z-30 flex h-9 shrink-0 items-center gap-1 border-b border-border bg-surface",
+        "relative z-30 flex shrink-0 items-center gap-1 border-b border-border bg-surface",
+        isWindows ? "h-10" : "h-9",
         isMac ? "pl-0 pr-2" : "pl-2 pr-0",
       )}
     >
       {isMac && controls}
 
       {!isMac && (
-        <div className="flex shrink-0 items-center gap-1.5 pl-1 pr-2" data-tauri-drag-region>
+        <div className="flex h-full shrink-0 items-center gap-1.5 pl-1 pr-2" data-tauri-drag-region>
           <div className="grid h-5 w-5 place-items-center rounded bg-accent text-[10px] font-bold text-accentfg">
             CT
           </div>
@@ -307,11 +307,15 @@ export function TitleBar() {
         ))}
       </nav>
 
+      {/* Zonas de arrastre: el header entero no puede ser drag-region en Windows
+          o los clics de menú y botones se comen. */}
+      <div data-tauri-drag-region className="h-full min-w-2 flex-1" />
+
       {/* Buscador central */}
       <button
         type="button"
         onClick={() => setPaletteOpen(true)}
-        className="mx-auto flex h-6 w-full max-w-md items-center gap-2 rounded-md border border-border bg-bg/60 px-2.5 text-left text-[11px] text-muted transition-colors hover:border-accent/60 hover:text-text"
+        className="flex h-6 w-full max-w-md items-center gap-2 rounded-md border border-border bg-bg/60 px-2.5 text-left text-[11px] text-muted transition-colors hover:border-accent/60 hover:text-text"
       >
         <Search size={12} className="shrink-0" />
         <span className="flex-1 truncate">
@@ -325,8 +329,10 @@ export function TitleBar() {
         </kbd>
       </button>
 
+      <div data-tauri-drag-region className="h-full min-w-2 flex-1" />
+
       {/* Acciones de la derecha */}
-      <div data-tour="titlebar-actions" className="flex shrink-0 items-center gap-0.5">
+      <div data-tour="titlebar-actions" className="flex h-full shrink-0 items-center gap-0.5">
         <span className={cx(iconButton, "relative")} title={t("titlebar.notifications", { count: toasts.length })}>
           <Bell size={13} />
           {toasts.length > 0 && (

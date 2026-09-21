@@ -34,6 +34,8 @@ import {
   sftpList,
   sftpMkdir,
   sftpRemove,
+  walkLocalTree,
+  walkRemoteTree,
   type FsEntry,
 } from "../../lib/sftp";
 import { describeSshError } from "../../lib/ssh";
@@ -195,9 +197,9 @@ function Pane({
           "truncate border-b border-border/60 font-mono text-[10px] text-muted",
           clasico ? CLASICO.ruta : "px-2 py-1",
         )}
-        title={path}
+        title={path || (kind === "local" ? t("sftp.thisPc") : "—")}
       >
-        {path || "—"}
+        {path || (kind === "local" ? t("sftp.thisPc") : "—")}
       </p>
 
       {/* En el modo clásico los listados llevan cabecera de columnas. */}
@@ -229,7 +231,7 @@ function Pane({
               <div
                 role="button"
                 tabIndex={0}
-                draggable={!entry.isDir}
+                draggable
                 onDragStart={() => onDragStartEntry(entry)}
                 onDragEnd={onDragEndEntry}
                 onClick={() => setSelected(entry.path)}
@@ -248,7 +250,7 @@ function Pane({
                       ? CLASICO.seleccion
                       : "bg-accent/15 text-text"
                     : "text-muted hover:bg-elevated",
-                  !entry.isDir && "cursor-grab active:cursor-grabbing",
+                  "cursor-grab active:cursor-grabbing",
                 )}
               >
                 <EntryIcon entry={entry} />
@@ -366,7 +368,7 @@ export function SFTPPanel() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const [localPath, setLocalPath] = useState("");
+  const [localPath, setLocalPath] = useState<string | null>(null);
   const [remotePath, setRemotePath] = useState("");
   const [localEntries, setLocalEntries] = useState<FsEntry[]>([]);
   const [remoteEntries, setRemoteEntries] = useState<FsEntry[]>([]);
@@ -500,7 +502,7 @@ export function SFTPPanel() {
   );
 
   useEffect(() => {
-    if (localPath) void refreshLocal(localPath);
+    if (localPath !== null) void refreshLocal(localPath);
   }, [localPath, refreshLocal]);
 
   // Progreso de las transferencias.
@@ -592,47 +594,94 @@ export function SFTPPanel() {
   /* ------------------------------------------------------------ navegación */
 
   const transfer = (source: PaneKind, entry: FsEntry) => {
-    if (entry.isDir) {
-      pushToast(
-        "warning",
-        t("sftp.foldersUnsupported"),
-        t("sftp.foldersUnsupportedDetail"),
-      );
-      return;
-    }
-
-    if (source === "local") {
-      if (status !== "ready") {
+    void (async () => {
+      if (source === "local" && status !== "ready") {
         pushToast("warning", t("sftp.noConnection"), t("sftp.connectBeforeUpload"));
         return;
       }
-      const remoteTarget = joinPath(remotePath, entry.name);
-      enqueue([
-        {
-          sessionId,
-          direction: "upload",
-          name: entry.name,
-          localPath: entry.path,
-          remotePath: remoteTarget,
-          size: entry.size,
-        },
-      ]);
-      pushToast("info", t("sftp.queuedUpload"), `${entry.name} → ${remoteTarget}`);
-      return;
-    }
+      if (source === "remote" && (localPath === null || localPath === "")) {
+        pushToast("warning", t("sftp.pickDriveFirst"), t("sftp.pickDriveFirstDetail"));
+        return;
+      }
 
-    const localTarget = joinPath(localPath, entry.name);
-    enqueue([
-      {
-        sessionId,
-        direction: "download",
-        name: entry.name,
-        localPath: localTarget,
-        remotePath: entry.path,
-        size: entry.size,
-      },
-    ]);
-    pushToast("info", t("sftp.queuedDownload"), `${entry.name} → ${localTarget}`);
+      if (!entry.isDir) {
+        if (source === "local") {
+          const remoteTarget = joinPath(remotePath, entry.name);
+          enqueue([
+            {
+              sessionId,
+              direction: "upload",
+              name: entry.name,
+              localPath: entry.path,
+              remotePath: remoteTarget,
+              size: entry.size,
+            },
+          ]);
+          pushToast("info", t("sftp.queuedUpload"), `${entry.name} → ${remoteTarget}`);
+          return;
+        }
+        const localTarget = joinPath(localPath ?? "", entry.name);
+        enqueue([
+          {
+            sessionId,
+            direction: "download",
+            name: entry.name,
+            localPath: localTarget,
+            remotePath: entry.path,
+            size: entry.size,
+          },
+        ]);
+        pushToast("info", t("sftp.queuedDownload"), `${entry.name} → ${localTarget}`);
+        return;
+      }
+
+      try {
+        const tree =
+          source === "local"
+            ? await walkLocalTree(entry)
+            : await walkRemoteTree(sessionId, entry);
+        const dirs = tree.filter((item) => item.isDir);
+        const files = tree.filter((item) => !item.isDir);
+
+        dirs.sort((a, b) => a.relativePath.length - b.relativePath.length);
+        for (const dir of dirs) {
+          if (source === "local") {
+            await sftpMkdir(sessionId, joinPath(remotePath, dir.relativePath));
+          } else {
+            await localMkdir(joinPath(localPath ?? "", dir.relativePath));
+          }
+        }
+
+        enqueue(
+          files.map((file) =>
+            source === "local"
+              ? {
+                  sessionId,
+                  direction: "upload" as const,
+                  name: file.relativePath,
+                  localPath: file.sourcePath,
+                  remotePath: joinPath(remotePath, file.relativePath),
+                  size: file.size,
+                }
+              : {
+                  sessionId,
+                  direction: "download" as const,
+                  name: file.relativePath,
+                  localPath: joinPath(localPath ?? "", file.relativePath),
+                  remotePath: file.sourcePath,
+                  size: file.size,
+                },
+          ),
+        );
+        pushToast(
+          "info",
+          t("sftp.queuedFolder"),
+          t("sftp.queuedFolderDetail", { count: files.length, name: entry.name }),
+        );
+      } catch (err) {
+        pushToast("error", t("sftp.folderWalkFailed"), String(err));
+      }
+    })();
   };
 
   const navigate = (kind: PaneKind, entry: FsEntry) => {
@@ -671,6 +720,10 @@ export function SFTPPanel() {
 
     try {
       if (kind === "local") {
+        if (localPath === null || localPath === "") {
+          pushToast("warning", t("sftp.pickDriveFirst"), t("sftp.pickDriveFirstDetail"));
+          return;
+        }
         await localMkdir(joinPath(localPath, clean));
         await refreshLocal(localPath);
       } else {
@@ -762,18 +815,20 @@ export function SFTPPanel() {
         <Pane
           kind="local"
           title={t("sftp.paneLocal")}
-          subtitle={baseName(localPath) || "~"}
+          subtitle={localPath ? baseName(localPath) || "~" : t("sftp.thisPc")}
           icon={<HardDrive size={12} className="shrink-0 text-muted" />}
-          path={localPath}
+          path={localPath ?? ""}
           entries={localEntries}
           emptyLabel={t("common.loading")}
-          disabled={!localPath}
+          disabled={localPath === null}
           isDropTarget={dropTarget === "local"}
           dragging={Boolean(drag) && drag?.from === "remote"}
           refreshing={refreshingLocal}
           onNavigate={(entry) => navigate("local", entry)}
-          onUp={() => setLocalPath(parentPath(localPath))}
-          onRefresh={() => void refreshLocal(localPath)}
+          onUp={() => setLocalPath(parentPath(localPath ?? ""))}
+          onRefresh={() => {
+            if (localPath !== null) void refreshLocal(localPath);
+          }}
           onMkdir={() => void makeDirectory("local")}
           clasico={!oficina}
           onTransfer={(entry) => transfer("local", entry)}

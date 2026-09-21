@@ -172,15 +172,52 @@ pub async fn local_exec(command: String, timeout_ms: Option<u64>) -> Result<Exec
 
 /// Prepara el intérprete de órdenes del sistema.
 fn shell_local(comando: &str) -> tokio::process::Command {
-    if cfg!(windows) {
-        let mut cmd = tokio::process::Command::new("cmd");
-        cmd.arg("/C").arg(comando);
+    #[cfg(windows)]
+    {
+        let mut cmd = windows_shell(comando);
+        // Sin esto, cada `!comando` abre un parpadeo de consola negra.
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
         cmd
-    } else {
+    }
+    #[cfg(not(windows))]
+    {
         let mut cmd = tokio::process::Command::new("sh");
         cmd.arg("-c").arg(comando);
         cmd
     }
+}
+
+#[cfg(windows)]
+fn windows_shell(comando: &str) -> tokio::process::Command {
+    for program in ["pwsh", "powershell"] {
+        if command_exists(program) {
+            let mut cmd = tokio::process::Command::new(program);
+            cmd.args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command"])
+                .arg(comando);
+            return cmd;
+        }
+    }
+    let mut cmd = tokio::process::Command::new("cmd");
+    cmd.arg("/d").arg("/c").arg(comando);
+    cmd
+}
+
+#[cfg(windows)]
+fn command_exists(program: &str) -> bool {
+    let Some(paths) = std::env::var_os("PATH") else {
+        return false;
+    };
+    std::env::split_paths(&paths).any(|dir| {
+        ["", ".exe", ".cmd", ".bat"].iter().any(|ext| {
+            let name = if ext.is_empty() {
+                program.to_string()
+            } else {
+                format!("{program}{ext}")
+            };
+            dir.join(name).is_file()
+        })
+    })
 }
 
 /// Decide dónde ejecutar una línea escrita en la consola.

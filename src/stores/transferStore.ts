@@ -3,9 +3,9 @@
 
 import { create } from "zustand";
 import { uid } from "../lib/utils";
-import { sftpDownload, sftpUpload } from "../lib/sftp";
+import { sftpCancel, sftpDownload, sftpUpload } from "../lib/sftp";
 
-export type TransferStatus = "queued" | "running" | "done" | "error";
+export type TransferStatus = "queued" | "running" | "done" | "error" | "cancelled";
 export type TransferDirection = "upload" | "download";
 
 export interface Transfer {
@@ -40,6 +40,7 @@ interface TransferState {
 
   enqueue: (requests: TransferRequest[]) => void;
   updateProgress: (transferId: string, transferred: number, total: number, done: boolean) => void;
+  cancel: (id: string) => void;
   remove: (id: string) => void;
   clearFinished: () => void;
   clearAll: () => void;
@@ -81,10 +82,18 @@ export const useTransferStore = create<TransferState>((set, get) => {
         completedAt: Date.now(),
       }));
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const cancelled =
+        get().transfers.find((t) => t.id === next.id)?.status === "cancelled" ||
+        /cancelad/i.test(message);
       set((state) => ({
         transfers: state.transfers.map((t) =>
           t.id === next.id
-            ? { ...t, status: "error", error: err instanceof Error ? err.message : String(err) }
+            ? {
+                ...t,
+                status: cancelled ? "cancelled" : "error",
+                error: cancelled ? undefined : message,
+              }
             : t,
         ),
       }));
@@ -114,7 +123,7 @@ export const useTransferStore = create<TransferState>((set, get) => {
     updateProgress: (transferId, transferred, total, done) =>
       set((state) => ({
         transfers: state.transfers.map((t) =>
-          t.id === transferId
+          t.id === transferId && t.status !== "cancelled"
             ? {
                 ...t,
                 transferred,
@@ -125,8 +134,32 @@ export const useTransferStore = create<TransferState>((set, get) => {
         ),
       })),
 
-    remove: (id) =>
-      set((state) => ({ transfers: state.transfers.filter((t) => t.id !== id) })),
+    cancel: (id) => {
+      const item = get().transfers.find((t) => t.id === id);
+      if (!item) return;
+      if (item.status !== "queued" && item.status !== "running") return;
+      set((state) => ({
+        transfers: state.transfers.map((t) =>
+          t.id === id ? { ...t, status: "cancelled" as const } : t,
+        ),
+      }));
+      if (item.status === "running") {
+        void sftpCancel(id).catch(() => {
+          /* la transferencia puede haber terminado ya */
+        });
+      }
+      if (item.status === "queued") {
+        void pump();
+      }
+    },
+
+    remove: (id) => {
+      const item = get().transfers.find((t) => t.id === id);
+      if (item?.status === "running") {
+        void sftpCancel(id).catch(() => undefined);
+      }
+      set((state) => ({ transfers: state.transfers.filter((t) => t.id !== id) }));
+    },
 
     clearFinished: () =>
       set((state) => ({

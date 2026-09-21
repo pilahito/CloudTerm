@@ -5,6 +5,31 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [Unreleased]
+
+### Windows
+
+- El panel local entiende rutas `C:\…`, sube hasta «Este equipo» y lista las unidades.
+- La barra de título ya no captura los clics: arrastre solo en las zonas vacías, botones al tamaño de Windows 11, sombra de ventana.
+- Los comandos locales (`!…`) usan PowerShell y no abren una consola negra.
+- Se detectan VS Code y el resto de editores por `.cmd` y por su carpeta de instalación.
+- Fuente por defecto: Cascadia Code. WebView2 no se duerme con la ventana al fondo (la terminal sigue viva).
+- El instalador descarga WebView2 si falta.
+
+### Documentación
+
+- El vídeo de ejemplo (`CONTEXTO__Estás_construyendo_l.mp4`) vive en
+  `docs/capturas/ejemplo.mp4` y se reproduce en la pantalla de inicio.
+
+### Terminal y archivos
+
+- La pestaña local abre un intérprete real: PowerShell o `cmd` en Windows, `$SHELL` en Unix.
+- Las carpetas se copian de forma recursiva; una transferencia en curso se puede cancelar.
+- La versión de «Acerca de» y del banner coincide con `1.0.0`.
+- `~/ruta` en Windows usa `USERPROFILE` y el separador del sistema.
+
+---
+
 ## [1.0.0] — 2026-09-14
 
 Primera versión estable. Cliente SSH y SFTP de escritorio con interfaz propia,

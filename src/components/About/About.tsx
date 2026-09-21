@@ -1,6 +1,7 @@
 // CloudTerm · github.com/pilahito/cloudterm
 // © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Code2, Mail, Scale, Cpu, Heart, MonitorSmartphone } from "lucide-react";
 import { useUiStore } from "../../stores/uiStore";
@@ -42,6 +43,16 @@ export function About() {
   const setDonateOpen = useUiStore((s) => s.setDonateOpen);
   const pushToast = useUiStore((s) => s.pushToast);
   const { os } = usePlatform();
+  const [version, setVersion] = useState("1.0.0");
+
+  useEffect(() => {
+    void import("@tauri-apps/api/app")
+      .then(({ getVersion }) => getVersion())
+      .then(setVersion)
+      .catch(() => {
+        /* en el navegador no hay IPC */
+      });
+  }, []);
 
   const copyEmail = () => {
     copyToClipboard(CONTACT_EMAIL).then((ok) =>
@@ -85,7 +96,7 @@ export function About() {
               <div>
                 <h2 className="text-sm font-semibold leading-tight">CloudTerm</h2>
                 <p className="text-[10px] text-muted">
-                  {t("about.version", { version: "0.1.0", os: OS_LABEL[os] })}
+                  {t("about.version", { version, os: OS_LABEL[os] })}
                 </p>
               </div>
               <button

@@ -14,10 +14,14 @@ export const THEMES: Array<{ id: ThemeName; label: string }> = [
   { id: "daylight", label: "Daylight" },
 ];
 
+const DEFAULT_FONT =
+  '"Cascadia Code", "Cascadia Mono", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace';
+const LEGACY_FONT = '"JetBrains Mono", "Fira Code", Menlo, Consolas, monospace';
+
 export const DEFAULT_SETTINGS: Settings = {
   theme: "neon",
   fontSize: 14,
-  fontFamily: '"JetBrains Mono", "Fira Code", Menlo, Consolas, monospace',
+  fontFamily: DEFAULT_FONT,
   cursorBlink: true,
   scrollback: 5000,
   sidebarOpen: true,
@@ -46,6 +50,16 @@ export const useSettingsStore = create<SettingsState>()(
       reset: () => set({ settings: DEFAULT_SETTINGS }),
       setTheme: (theme) => set((state) => ({ settings: { ...state.settings, theme } })),
     }),
-    { name: "cloudterm.settings", version: 1 },
+    {
+      name: "cloudterm.settings",
+      version: 2,
+      migrate: (persisted, version) => {
+        const state = persisted as SettingsState;
+        if (version < 2 && state.settings?.fontFamily === LEGACY_FONT) {
+          state.settings.fontFamily = DEFAULT_FONT;
+        }
+        return state;
+      },
+    },
   ),
 );

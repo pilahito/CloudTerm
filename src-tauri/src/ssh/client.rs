@@ -197,7 +197,7 @@ pub struct SessionParams {
 }
 
 /// Directorio personal según la plataforma. En Windows no existe `HOME`.
-fn home_from_env() -> Option<String> {
+pub(crate) fn home_from_env() -> Option<String> {
     std::env::var("HOME")
         .ok()
         .or_else(|| std::env::var("USERPROFILE").ok())
@@ -221,7 +221,10 @@ pub fn shellexpand(input: &str) -> String {
         .strip_prefix("~/")
         .or_else(|| trimmed.strip_prefix("~\\"))
     {
-        return format!("{home}/{rest}");
+        return std::path::PathBuf::from(&home)
+            .join(rest)
+            .to_string_lossy()
+            .into_owned();
     }
     trimmed.replace("$HOME", &home).replace("%USERPROFILE%", &home)
 }
@@ -243,7 +246,7 @@ pub fn resolve_key_path(home_dir: Option<&Path>, requested: Option<&str>) -> Res
     let home = match home_dir {
         Some(home) => home.to_path_buf(),
         None => PathBuf::from(
-            std::env::var("HOME").map_err(|_| "no se pudo resolver el directorio personal".to_string())?,
+            home_from_env().ok_or_else(|| "no se pudo resolver el directorio personal".to_string())?,
         ),
     };
     let ssh_dir = home.join(".ssh");
@@ -619,7 +622,9 @@ mod tests {
         SessionParams {
             host: TEST_HOST.to_string(),
             port: TEST_PORT,
-            username: std::env::var("USER").unwrap_or_else(|_| "root".to_string()),
+            username: std::env::var("USER")
+                .or_else(|_| std::env::var("USERNAME"))
+                .unwrap_or_else(|_| "root".to_string()),
             auth: SshAuth::Key {
                 key_path: Some(
                     test_dir()
@@ -646,8 +651,10 @@ mod tests {
 
         // Con `~`, `~/` y `~\` (Windows) se antepone el directorio personal.
         if let Some(home) = home_from_env() {
-            assert_eq!(shellexpand("~/x"), format!("{home}/x"));
-            assert_eq!(shellexpand("~\\x"), format!("{home}/x"));
+            let joined = std::path::PathBuf::from(&home).join("x");
+            let expected = joined.to_string_lossy().into_owned();
+            assert_eq!(shellexpand("~/x"), expected);
+            assert_eq!(shellexpand("~\\x"), expected);
             assert_eq!(shellexpand("~"), home);
             assert_eq!(shellexpand("$HOME/y"), format!("{home}/y"));
         }
@@ -657,9 +664,13 @@ mod tests {
     fn expands_home_prefix() {
         // Sin `~` la cadena se devuelve intacta.
         assert_eq!(shellexpand("/etc/ssh/sshd_config"), "/etc/ssh/sshd_config");
-        // Con `~` se antepone HOME cuando existe.
-        if let Ok(home) = std::env::var("HOME") {
-            assert_eq!(shellexpand("~/x"), format!("{home}/x"));
+        // Con `~` se antepone el directorio personal cuando existe.
+        if let Some(home) = home_from_env() {
+            let expected = std::path::PathBuf::from(&home)
+                .join("x")
+                .to_string_lossy()
+                .into_owned();
+            assert_eq!(shellexpand("~/x"), expected);
         }
     }
 

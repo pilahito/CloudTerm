@@ -146,15 +146,110 @@ export async function resolveAuth(
 /* Rutas                                                                      */
 /* -------------------------------------------------------------------------- */
 
-/** Une base y nombre con `/`, válido también en Windows. */
-export function joinPath(base: string, name: string): string {
+/** `C:\…`, `C:/…` o UNC `\\servidor\recurso`. El SFTP remoto sigue siendo POSIX. */
+export function isWindowsFsPath(path: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(path) || path.startsWith("\\\\");
+}
+
+function windowsSep(path: string): "\\" | "/" {
+  return path.includes("/") && !path.includes("\\") ? "/" : "\\";
+}
+
+function joinOne(base: string, name: string): string {
+  if (isWindowsFsPath(base)) {
+    const sep = windowsSep(base);
+    const trimmed = base.replace(/[\\/]+$/, "");
+    return `${trimmed}${sep}${name}`;
+  }
   if (!base || base === "/") return `/${name}`;
   return base.endsWith("/") ? `${base}${name}` : `${base}/${name}`;
 }
 
-/** Directorio padre, o la misma ruta si ya es la raíz. */
+/** Une base y nombre. Acepta varios segmentos (`foo/bar`) y rutas Windows. */
+export function joinPath(base: string, name: string): string {
+  const parts = name.split(/[\\/]+/).filter(Boolean);
+  if (parts.length === 0) return base;
+  return parts.reduce((acc, part) => joinOne(acc, part), base);
+}
+
+export function sftpCancel(transferId: string): Promise<void> {
+  return invoke("sftp_cancel", { transferId });
+}
+
+export interface WalkItem {
+  /** Ruta absoluta en el origen. */
+  sourcePath: string;
+  /** Ruta relativa POSIX desde la raíz que se arrastró. */
+  relativePath: string;
+  isDir: boolean;
+  size: number;
+  name: string;
+}
+
+const MAX_WALK_DEPTH = 32;
+
+async function walkEntries(
+  root: FsEntry,
+  list: (path: string) => Promise<FsEntry[]>,
+): Promise<WalkItem[]> {
+  const items: WalkItem[] = [];
+  const visited = new Set<string>();
+
+  const visit = async (entry: FsEntry, relativePath: string, depth: number) => {
+    if (depth > MAX_WALK_DEPTH) return;
+    const key = entry.path.toLowerCase();
+    if (visited.has(key)) return;
+    visited.add(key);
+
+    items.push({
+      sourcePath: entry.path,
+      relativePath,
+      isDir: entry.isDir,
+      size: entry.size,
+      name: entry.name,
+    });
+
+    if (!entry.isDir) return;
+    const children = await list(entry.path);
+    for (const child of children) {
+      const childRel = relativePath ? `${relativePath}/${child.name}` : child.name;
+      await visit(child, childRel, depth + 1);
+    }
+  };
+
+  await visit(root, root.name, 0);
+  return items;
+}
+
+export function walkLocalTree(root: FsEntry): Promise<WalkItem[]> {
+  return walkEntries(root, localList);
+}
+
+export function walkRemoteTree(sessionId: string, root: FsEntry): Promise<WalkItem[]> {
+  return walkEntries(root, (path) => sftpList(sessionId, path));
+}
+
+/**
+ * Directorio padre.
+ *
+ * En Windows, el padre de `C:\` es `""` (la lista de unidades). En POSIX, el
+ * padre de `/` es `/`.
+ */
 export function parentPath(path: string): string {
-  if (!path || path === "/") return "/";
+  if (!path) return "";
+  if (isWindowsFsPath(path)) {
+    const normalized = path.replace(/\//g, "\\").replace(/\\+$/, "");
+    if (/^[A-Za-z]:$/.test(normalized)) return "";
+    if (normalized.startsWith("\\\\")) {
+      const parts = normalized.split("\\").filter(Boolean);
+      if (parts.length <= 2) return "";
+      return `\\\\${parts.slice(0, -1).join("\\")}`;
+    }
+    const index = normalized.lastIndexOf("\\");
+    if (index <= 2) return `${normalized.slice(0, 2)}\\`;
+    return normalized.slice(0, index);
+  }
+  if (path === "/") return "/";
   const trimmed = path.replace(/\/+$/, "");
   const index = trimmed.lastIndexOf("/");
   if (index <= 0) return "/";
@@ -163,6 +258,13 @@ export function parentPath(path: string): string {
 
 /** Último segmento de una ruta, para mostrar migas de pan compactas. */
 export function baseName(path: string): string {
+  if (!path) return "";
+  if (isWindowsFsPath(path)) {
+    const normalized = path.replace(/\//g, "\\").replace(/\\+$/, "");
+    if (/^[A-Za-z]:$/.test(normalized)) return `${normalized}\\`;
+    const index = normalized.lastIndexOf("\\");
+    return index === -1 ? normalized : normalized.slice(index + 1);
+  }
   const trimmed = path.replace(/\/+$/, "");
   const index = trimmed.lastIndexOf("/");
   return index === -1 ? trimmed : trimmed.slice(index + 1);

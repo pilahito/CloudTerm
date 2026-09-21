@@ -1,7 +1,7 @@
 // CloudTerm · github.com/pilahito/cloudterm
 // © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
 
-import { ArrowUp, X, CheckCircle2, XCircle, Loader2, Clock, Trash2 } from "lucide-react";
+import { ArrowUp, X, CheckCircle2, XCircle, Loader2, Clock, Trash2, Ban } from "lucide-react";
 import { useTransferStore, type Transfer } from "../../stores/transferStore";
 import { formatBytes, cx } from "../../lib/utils";
 import { useT } from "../../i18n";
@@ -14,6 +14,8 @@ function StatusIcon({ status }: { status: Transfer["status"] }) {
       return <CheckCircle2 size={12} className="text-success" />;
     case "error":
       return <XCircle size={12} className="text-danger" />;
+    case "cancelled":
+      return <Ban size={12} className="text-muted" />;
     default:
       return <Clock size={12} className="text-muted" />;
   }
@@ -22,6 +24,8 @@ function StatusIcon({ status }: { status: Transfer["status"] }) {
 function TransferRow({ transfer }: { transfer: Transfer }) {
   const t = useT();
   const remove = useTransferStore((s) => s.remove);
+  const cancel = useTransferStore((s) => s.cancel);
+  const canCancel = transfer.status === "queued" || transfer.status === "running";
   const percent =
     transfer.size > 0
       ? Math.min(100, Math.round((transfer.transferred / transfer.size) * 100))
@@ -49,6 +53,10 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
           <span className="mt-0.5 block truncate text-[10px] text-danger">
             {transfer.error ?? t("sftp.transferError")}
           </span>
+        ) : transfer.status === "cancelled" ? (
+          <span className="mt-0.5 block truncate text-[10px] text-muted">
+            {t("sftp.cancelled")}
+          </span>
         ) : (
           <span className="mt-1 block h-1 overflow-hidden rounded-full bg-border">
             <span
@@ -70,9 +78,9 @@ function TransferRow({ transfer }: { transfer: Transfer }) {
 
       <button
         type="button"
-        title={t("sftp.removeFromList")}
-        aria-label={t("sftp.removeFromList")}
-        onClick={() => remove(transfer.id)}
+        title={canCancel ? t("sftp.cancelTransfer") : t("sftp.removeFromList")}
+        aria-label={canCancel ? t("sftp.cancelTransfer") : t("sftp.removeFromList")}
+        onClick={() => (canCancel ? cancel(transfer.id) : remove(transfer.id))}
         className="grid h-5 w-5 shrink-0 place-items-center rounded text-muted opacity-0 transition-opacity hover:bg-border hover:text-text group-hover:opacity-100"
       >
         <X size={11} />

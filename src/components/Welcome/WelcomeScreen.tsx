@@ -91,7 +91,7 @@ export function WelcomeScreen() {
   const account = useAuthStore((s) => s.account);
 
   return (
-    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-x-hidden overflow-y-auto">
       {/* Fondo: rejilla en perspectiva + nubes pixel-art */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] text-accent"
@@ -186,6 +186,23 @@ export function WelcomeScreen() {
             onClick={() => setActiveView("pixel")}
           />
         </div>
+
+        <figure className="w-full max-w-xl">
+          <video
+            className="w-full rounded-lg border border-border bg-black shadow-[0_0_40px_-16px_rgba(34,211,238,0.45)]"
+            src="/ejemplo.mp4"
+            poster="/ejemplo-poster.png"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            preload="metadata"
+          />
+          <figcaption className="mt-2 text-center text-[10px] text-muted">
+            {t("welcome.exampleVideoCaption")}
+          </figcaption>
+        </figure>
 
         <div className="flex flex-wrap items-center justify-center gap-1.5">
           <button

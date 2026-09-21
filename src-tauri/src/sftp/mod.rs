@@ -15,6 +15,7 @@
 
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use russh::client::Handle;
@@ -98,6 +99,41 @@ struct SftpHandle {
 #[derive(Default)]
 pub struct SftpManager {
     sessions: Mutex<HashMap<String, Arc<SftpHandle>>>,
+    /// Una bandera por transferencia, para poder abortar la que está en curso.
+    cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
+}
+
+async fn claim_cancel(state: &SftpManager, transfer_id: &str) -> Arc<AtomicBool> {
+    let mut guard = state.cancels.lock().await;
+    guard
+        .entry(transfer_id.to_string())
+        .or_insert_with(|| Arc::new(AtomicBool::new(false)))
+        .clone()
+}
+
+async fn release_cancel(state: &SftpManager, transfer_id: &str) {
+    let mut guard = state.cancels.lock().await;
+    guard.remove(transfer_id);
+}
+
+fn throw_if_cancelled(flag: &AtomicBool) -> Result<(), String> {
+    if flag.load(Ordering::Relaxed) {
+        Err("transferencia cancelada".to_string())
+    } else {
+        Ok(())
+    }
+}
+
+/// Aborta una transferencia en curso. Si todavía no ha empezado, la marca para
+/// que falle al primer byte.
+#[tauri::command]
+pub async fn sftp_cancel(state: State<'_, SftpManager>, transfer_id: String) -> Result<(), String> {
+    let mut guard = state.cancels.lock().await;
+    guard
+        .entry(transfer_id)
+        .or_insert_with(|| Arc::new(AtomicBool::new(false)))
+        .store(true, Ordering::Relaxed);
+    Ok(())
 }
 
 async fn get_handle(state: &SftpManager, session_id: &str) -> Result<Arc<SftpHandle>, String> {
@@ -244,7 +280,34 @@ pub fn local_home(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn local_list(path: String) -> Result<Vec<FsEntry>, String> {
+    #[cfg(windows)]
+    if path.trim().is_empty() {
+        return list_windows_drives();
+    }
     local_entries(Path::new(&path))
+}
+
+/// Letras de unidad montadas (`C:\`, `D:\`…), para poder subir desde `C:\`.
+#[cfg(windows)]
+fn list_windows_drives() -> Result<Vec<FsEntry>, String> {
+    let mut entries = Vec::new();
+    // A: y B: son disquetes: `exists()` puede bloquear varios segundos.
+    for letter in b'C'..=b'Z' {
+        let root = format!("{}:\\", letter as char);
+        if !Path::new(&root).exists() {
+            continue;
+        }
+        entries.push(FsEntry {
+            name: format!("{}:", letter as char),
+            path: root,
+            is_dir: true,
+            is_symlink: false,
+            size: 0,
+            modified: None,
+            permissions: None,
+        });
+    }
+    Ok(entries)
 }
 
 #[tauri::command]
@@ -328,11 +391,13 @@ pub async fn sftp_mkdir(
     path: String,
 ) -> Result<(), String> {
     let handle = get_handle(&state, &session_id).await?;
-    handle
-        .session
-        .create_dir(&path)
-        .await
-        .map_err(|err| format!("no se pudo crear {path}: {err}"))
+    match handle.session.create_dir(&path).await {
+        Ok(()) => Ok(()),
+        Err(err) => match handle.session.read_dir(&path).await {
+            Ok(_) => Ok(()),
+            Err(_) => Err(format!("no se pudo crear {path}: {err}")),
+        },
+    }
 }
 
 #[tauri::command]
@@ -377,6 +442,8 @@ pub async fn sftp_download(
     local_path: String,
 ) -> Result<u64, String> {
     let handle = get_handle(&state, &session_id).await?;
+    let cancel = claim_cancel(&state, &transfer_id).await;
+    throw_if_cancelled(&cancel)?;
 
     let total = handle
         .session
@@ -408,6 +475,7 @@ pub async fn sftp_download(
     let mut last_report = 0u64;
 
     loop {
+        throw_if_cancelled(&cancel)?;
         let read = remote
             .read(&mut buffer)
             .await
@@ -444,12 +512,13 @@ pub async fn sftp_download(
     emit_progress(
         &app,
         ProgressPayload {
-            transfer_id,
+            transfer_id: transfer_id.clone(),
             transferred,
             total: total.max(transferred),
             done: true,
         },
     );
+    release_cancel(&state, &transfer_id).await;
     Ok(transferred)
 }
 
@@ -464,6 +533,8 @@ pub async fn sftp_upload(
     remote_path: String,
 ) -> Result<u64, String> {
     let handle = get_handle(&state, &session_id).await?;
+    let cancel = claim_cancel(&state, &transfer_id).await;
+    throw_if_cancelled(&cancel)?;
 
     let total = tokio::fs::metadata(&local_path)
         .await
@@ -486,6 +557,7 @@ pub async fn sftp_upload(
     let mut last_report = 0u64;
 
     loop {
+        throw_if_cancelled(&cancel)?;
         let read = local
             .read(&mut buffer)
             .await
@@ -522,12 +594,13 @@ pub async fn sftp_upload(
     emit_progress(
         &app,
         ProgressPayload {
-            transfer_id,
+            transfer_id: transfer_id.clone(),
             transferred,
             total: total.max(transferred),
             done: true,
         },
     );
+    release_cancel(&state, &transfer_id).await;
     Ok(transferred)
 }
 
@@ -568,7 +641,9 @@ mod tests {
         SessionParams {
             host: TEST_HOST.to_string(),
             port: TEST_PORT,
-            username: std::env::var("USER").unwrap_or_else(|_| "root".to_string()),
+            username: std::env::var("USER")
+                .or_else(|_| std::env::var("USERNAME"))
+                .unwrap_or_else(|_| "root".to_string()),
             auth: SshAuth::Key {
                 key_path: Some(
                     test_dir()
@@ -588,11 +663,31 @@ mod tests {
     }
 
     #[test]
+    fn cancel_flag_starts_clear_and_trips() {
+        let flag = AtomicBool::new(false);
+        assert!(throw_if_cancelled(&flag).is_ok());
+        flag.store(true, Ordering::Relaxed);
+        let err = throw_if_cancelled(&flag).expect_err("debería cancelar");
+        assert!(err.contains("cancelad"));
+    }
+
+    #[test]
     fn joins_and_walks_paths() {
         assert_eq!(join_path("/home/deploy", "logs"), "/home/deploy/logs");
         assert_eq!(join_path("/", "etc"), "/etc");
         assert_eq!(join_path("/home/", "logs"), "/home/logs");
         assert_eq!(join_path("", "etc"), "/etc");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn lists_at_least_the_system_drive() {
+        let drives = list_windows_drives().expect("debería listar unidades");
+        assert!(
+            drives.iter().any(|entry| entry.path.eq_ignore_ascii_case("C:\\")),
+            "no apareció C:\\ en {drives:?}"
+        );
+        assert!(drives.iter().all(|entry| entry.is_dir));
     }
 
     #[test]

@@ -22,8 +22,11 @@
         "resizable": true,
         "decorations": false,
         "transparent": false,
+        "shadow": true,
         "visible": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "backgroundThrottling": "disabled",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-background-timer-throttling --enable-gpu-rasterization"
       }
     ],
     "security": {
@@ -52,6 +55,10 @@
       }
     },
     "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
       "nsis": {
         "installMode": "both",
         "languages": [

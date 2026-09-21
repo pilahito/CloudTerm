@@ -68,23 +68,63 @@ const CONOCIDOS: &[(&str, &str, &str)] = &[
     ("notepad", "Notepad", "notepad"),
 ];
 
-/// ¿Existe este programa en el `PATH`?
-fn en_path(program: &str) -> bool {
+/// Ruta real del ejecutable, o `None` si no está.
+fn resolver_programa(program: &str) -> Option<String> {
     let Some(paths) = std::env::var_os("PATH") else {
-        return false;
+        return extra_windows_editor(program);
     };
-    std::env::split_paths(&paths).any(|dir| {
-        let directo = dir.join(program);
-        if directo.is_file() {
-            return true;
+    let extensiones: &[&str] = if cfg!(windows) {
+        &["", ".exe", ".cmd", ".bat"]
+    } else {
+        &[""]
+    };
+    for dir in std::env::split_paths(&paths) {
+        for ext in extensiones {
+            let candidato = if ext.is_empty() {
+                dir.join(program)
+            } else {
+                dir.join(format!("{program}{ext}"))
+            };
+            if candidato.is_file() {
+                return Some(candidato.to_string_lossy().into_owned());
+            }
         }
-        // En Windows los ejecutables llevan extensión.
-        if cfg!(windows) {
-            let exe = dir.join(format!("{program}.exe"));
-            return exe.is_file();
+    }
+    extra_windows_editor(program)
+}
+
+/// Instalaciones típicas de Windows que no siempre están en el `PATH`.
+fn extra_windows_editor(program: &str) -> Option<String> {
+    #[cfg(not(windows))]
+    {
+        let _ = program;
+        return None;
+    }
+    #[cfg(windows)]
+    {
+        let local = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+        let pf = std::env::var_os("ProgramFiles").map(PathBuf::from);
+        let pf86 = std::env::var_os("ProgramFiles(x86)").map(PathBuf::from);
+        let rels: &[&str] = match program {
+            "code" => &[
+                r"Programs\Microsoft VS Code\Code.exe",
+                r"Microsoft VS Code\Code.exe",
+            ],
+            "cursor" => &[r"Programs\cursor\Cursor.exe"],
+            "notepad++" => &[r"Notepad++\notepad++.exe"],
+            "windsurf" => &[r"Programs\Windsurf\Windsurf.exe"],
+            _ => &[],
+        };
+        for root in [local, pf, pf86].into_iter().flatten() {
+            for rel in rels {
+                let candidato = root.join(rel);
+                if candidato.is_file() {
+                    return Some(candidato.to_string_lossy().into_owned());
+                }
+            }
         }
-        false
-    })
+        None
+    }
 }
 
 /// Editores instalados en este equipo.
@@ -92,11 +132,12 @@ fn en_path(program: &str) -> bool {
 pub fn editores_disponibles() -> Vec<Editor> {
     CONOCIDOS
         .iter()
-        .filter(|(_, _, program)| en_path(program))
-        .map(|(id, label, program)| Editor {
-            id: (*id).to_string(),
-            label: (*label).to_string(),
-            program: (*program).to_string(),
+        .filter_map(|(id, label, program)| {
+            resolver_programa(program).map(|resolved| Editor {
+                id: (*id).to_string(),
+                label: (*label).to_string(),
+                program: resolved,
+            })
         })
         .collect()
 }
@@ -582,6 +623,11 @@ mod tests {
         let b = manager.siguiente_id();
         assert_ne!(a, b);
         assert!(a.starts_with("edit-"), "{a}");
+    }
+
+    fn en_path(program: &str) -> bool {
+        let path = Path::new(program);
+        path.is_file() || resolver_programa(program).is_some()
     }
 
     /// Lo importante: no se ofrece ningún editor que no esté instalado.

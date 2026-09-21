@@ -14,6 +14,8 @@ queda en tu equipo.
 [![Idiomas](https://img.shields.io/badge/idiomas-espa%C3%B1ol%20%C2%B7%20english%20%C2%B7%20%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-success)](docs/IDIOMAS.md)
 [![Traducciones](https://github.com/pilahito/cloudterm/actions/workflows/idiomas.yml/badge.svg)](https://github.com/pilahito/cloudterm/actions/workflows/idiomas.yml)
 
+![Vídeo de ejemplo](docs/capturas/ejemplo.mp4)
+
 </div>
 
 ---
@@ -40,7 +42,8 @@ habla el protocolo directamente.
 ### Terminal
 Sesiones SSH de verdad, con `xterm.js` y **russh**. Autenticación por contraseña
 o por clave, con passphrase. La ventana se adapta y la sesión se redimensiona
-sola.
+sola. La pestaña local es un **intérprete real** (PowerShell en Windows, `$SHELL`
+en Linux), no una consola de juguete.
 
 ### Archivos
 Panel de **doble panel** —local a la izquierda, servidor a la derecha— con
@@ -156,6 +159,7 @@ CloudTerm
 └── src-tauri/              Núcleo (Rust)
     └── src/
         ├── ssh/            Cliente SSH, verificación de clave, registro
+        ├── pty.rs          Terminal local (PowerShell / $SHELL)
         ├── sftp/           Transferencias, editor externo, consola
         ├── db/             Hosts en SQLite
         ├── auth/           Cuentas, segundo factor y destinos de copia
@@ -203,7 +207,7 @@ Lo más útil ahora mismo, por orden:
 2. **Reportar fallos** con el registro de conexiones adjunto
    (`~/.local/share/com.pilahito.cloudterm/conexiones.log`): ahí queda cada
    intento con su hora y cuánto tardó.
-3. **Probar en Windows y macOS.** Solo se ha probado a fondo en Linux.
+3. **Probar en macOS.** Windows ya se ha instalado en un PC; macOS no.
 
 Antes de proponer un cambio, comprueba que pasa esto:
 
@@ -236,12 +240,13 @@ Dicho claro, para que nadie se lleve una sorpresa:
 - **Android no compila.** El llavero que usa el proyecto no soporta esa
   plataforma y el proyecto Android no está generado. Es un trabajo pendiente, no
   un ajuste.
-- **Windows y macOS no se han probado** en un equipo real. Compilan, pero eso no
-  es lo mismo que funcionar.
+- **macOS no se ha probado** en un equipo real. Compila, pero eso no es lo
+  mismo que funcionar. Windows sí se ha instalado y arrancado en un PC.
 - **La copia es de hosts y ajustes**, no de credenciales.
 - **Los mensajes del núcleo** están en español; los más comunes se traducen en la
   interfaz.
-- **Faltan** la copia recursiva de carpetas y cancelar o reanudar transferencias.
+- **Falta** reanudar transferencias interrumpidas. Las carpetas sí se copian
+  y una transferencia en curso se puede cancelar.
 
 ---
 

@@ -6,14 +6,12 @@ Estado real de CloudTerm en cada sistema, y qué falta para cada uno.
 | --- | --- | --- |
 | **Linux** | ✅ Compilado y probado | En esta máquina |
 | **macOS** | 🟡 Preparado, sin verificar | GitHub Actions |
-| **Windows** | 🟡 Preparado, sin verificar | GitHub Actions |
+| **Windows** | 🟢 Compilado y usado en un equipo real | Esta máquina + GitHub Actions |
 | **Android** | 🔴 Experimental | GitHub Actions |
 
-> **Sé honesto con lo que sigue.** Linux es la única plataforma que se ha
-> compilado y ejecutado de verdad. Windows y macOS están **preparados** (código
-> sin suposiciones de Linux, iconos y configuración listos) pero **no
-> verificados**: en esta máquina no hay mingw ni un mac, y Tauri no se
-> cross-compila de forma fiable desde Linux.
+> **Sé honesto con lo que sigue.** Linux se ha usado a fondo. Windows se ha
+> compilado, instalado y arrancado en un PC real (barra de título, unidades
+> locales, shell). macOS sigue sin verificarse en un Mac.
 
 ---
 
@@ -53,7 +51,15 @@ Genera `.deb`, `.rpm` y `.AppImage` con `npm run tauri build`.
   respaldo para sistemas sin modos POSIX; en Windows la columna de permisos sale
   vacía en vez de mentir.
 - **Ventana**: la barra de título adapta los controles al SO (macOS a la
-  izquierda con semáforos, Windows y Linux a la derecha).
+  izquierda con semáforos, Windows y Linux a la derecha). En Windows los
+  botones tienen el tamaño de Windows 11, hay sombra y el arrastre no se come
+  los clics.
+- **Archivos**: el panel local lista unidades (`C:\`, `D:\`…) y no trata `C:\`
+  como si fuera `/`.
+- **Shell local**: la pestaña Terminal lanza PowerShell (o `cmd`) de verdad,
+  para programar en local. Los comandos `!…` del gestor también usan PowerShell
+  y no abren una consola negra.
+- **Editores**: se encuentran `code.cmd` y `Code.exe` en `%LOCALAPPDATA%\Programs`.
 
 ### Cómo compilarlo
 
@@ -156,7 +162,7 @@ sube el APK como artefacto.
 | --- | --- | --- | --- | --- |
 | Código preparado | ✅ | ✅ | ✅ | 🟡 |
 | Iconos | ✅ | ✅ | ✅ | ✅ |
-| Compilado y probado | ✅ | ❌ | ❌ | ❌ |
+| Compilado y probado | ✅ | 🟡 | ❌ | ❌ |
 | Flujo de compilación | ✅ | ✅ | ✅ | ✅ |
 | Firma / notarización | — | ❌ | ❌ | ❌ |
 | Adaptación de producto | — | — | — | ❌ |
