@@ -1,7 +1,7 @@
 // CloudTerm · github.com/pilahito/cloudterm
 // © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
 
-//! Cliente SSH sobre `russh`: conexión, autenticación y shell interactiva.
+// Cliente SSH sobre russh: conexión, autenticación y shell interactiva.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
