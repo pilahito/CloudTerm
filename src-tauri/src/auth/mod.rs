@@ -17,6 +17,7 @@ pub mod github;
 pub mod google;
 pub mod destinos;
 pub mod local;
+pub mod loopback;
 pub mod pkce;
 pub mod totp;
 pub mod sync;
@@ -71,6 +72,9 @@ pub struct AuthConfig {
     pub google_client_id: String,
     #[serde(default)]
     pub github_client_id: String,
+    /// Solo viaja al guardar; nunca se escribe en auth.json ni se devuelve.
+    #[serde(default, skip_serializing)]
+    pub github_client_secret: String,
 }
 
 impl AuthConfig {
@@ -154,6 +158,33 @@ struct StoredAuth {
 pub struct AuthState {
     pub config: AuthConfig,
     pub account: Option<Account>,
+    pub has_github_secret: bool,
+}
+
+const GITHUB_OAUTH_SECRET: &str = "auth:github:client_secret";
+
+fn github_oauth_secret() -> Option<String> {
+    crate::config::secrets::get_secret(GITHUB_OAUTH_SECRET)
+        .ok()
+        .flatten()
+        .filter(|value| !value.trim().is_empty())
+}
+
+fn save_github_oauth_secret(value: &str) -> Result<(), String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        crate::config::secrets::delete_secret(GITHUB_OAUTH_SECRET)
+    } else {
+        crate::config::secrets::set_secret(GITHUB_OAUTH_SECRET, trimmed)
+    }
+}
+
+fn to_state(stored: &StoredAuth) -> AuthState {
+    AuthState {
+        config: stored.config.clone(),
+        account: stored.account.clone(),
+        has_github_secret: github_oauth_secret().is_some(),
+    }
 }
 
 /// Lo que se le devuelve a la interfaz al restaurar una copia.
@@ -324,18 +355,21 @@ pub fn tokens_from_google(body: &str) -> Result<Tokens, String> {
 /// Configuración y sesión actual.
 #[tauri::command]
 pub fn auth_state(app: AppHandle) -> AuthState {
-    let stored = read_stored(&app);
-    AuthState {
-        config: stored.config,
-        account: stored.account,
-    }
+    to_state(&read_stored(&app))
 }
 
 /// Guarda los identificadores de cliente.
 #[tauri::command]
 pub fn auth_config_set(app: AppHandle, config: AuthConfig) -> Result<AuthState, String> {
     let mut stored = read_stored(&app);
-    stored.config = config;
+    if !config.github_client_secret.is_empty() {
+        save_github_oauth_secret(&config.github_client_secret)?;
+    }
+    stored.config = AuthConfig {
+        google_client_id: config.google_client_id,
+        github_client_id: config.github_client_id,
+        github_client_secret: String::new(),
+    };
     write_stored(&app, &stored)?;
 
     // Cambiar de aplicación de cliente invalida la sesión anterior: los tokens
@@ -346,10 +380,7 @@ pub fn auth_config_set(app: AppHandle, config: AuthConfig) -> Result<AuthState, 
     stored.account = None;
     write_stored(&app, &stored)?;
 
-    Ok(AuthState {
-        config: stored.config.clone(),
-        account: None,
-    })
+    Ok(to_state(&stored))
 }
 
 /// Inicia sesión con Google: abre el navegador y espera la vuelta.
@@ -401,7 +432,7 @@ pub async fn auth_sign_in_google(
     Ok(account)
 }
 
-/// Inicia sesión con GitHub mediante el flujo de dispositivo.
+/// Inicia sesión con GitHub: abre el navegador y espera la vuelta.
 #[tauri::command]
 pub async fn auth_sign_in_github(
     app: AppHandle,
@@ -413,19 +444,38 @@ pub async fn auth_sign_in_github(
     let client_id = stored.config.client_id(AuthProvider::GitHub).to_string();
     if client_id.is_empty() {
         return Err(
-            "falta el identificador de cliente de GitHub; créalo en tus ajustes de GitHub y pégalo aquí"
+            "falta el identificador de cliente de GitHub; créalo en GitHub → Developer settings y pégalo aquí"
                 .to_string(),
         );
     }
 
     let client = github::http_client()?;
-    let device = github::start_device_flow(&client, &client_id).await?;
+    let verifier = pkce::verifier();
+    let challenge = pkce::challenge(&verifier);
+    let expected_state = pkce::state();
 
-    // La interfaz enseña el código y el enlace.
-    let _ = app.emit("auth://device-code", &device);
-    let _ = app.opener().open_url(&device.verification_uri, None::<&str>);
+    let (port, waiter) = loopback::listen(expected_state.clone(), "GitHub").await?;
+    let redirect_uri = format!("http://127.0.0.1:{port}/callback");
+    let url = github::authorize_url(&client_id, &redirect_uri, &expected_state, &challenge);
 
-    let tokens = github::poll_for_token(&client, &client_id, &device, || {}).await?;
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|err| format!("no se pudo abrir el navegador: {err}"))?;
+
+    let code = waiter
+        .await
+        .map_err(|err| format!("la espera del navegador se interrumpió: {err}"))??;
+
+    let secret = github_oauth_secret();
+    let tokens = github::exchange_code(
+        &client,
+        &client_id,
+        secret.as_deref(),
+        &code,
+        &verifier,
+        &redirect_uri,
+    )
+    .await?;
     let account = github::user(&client, &tokens.access_token).await?;
 
     save_tokens(AuthProvider::GitHub, &tokens)?;
@@ -450,10 +500,7 @@ pub fn auth_sign_out(app: AppHandle, provider: AuthProvider) -> Result<AuthState
 
     let _ = app.emit("auth://signed-out", provider);
 
-    Ok(AuthState {
-        config: stored.config,
-        account: stored.account,
-    })
+    Ok(to_state(&stored))
 }
 
 /// Datos que se suben: los hosts de la base local y los ajustes que manda la

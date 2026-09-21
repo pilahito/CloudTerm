@@ -53,8 +53,9 @@ secretos y van al **llavero del sistema**, nunca a disco.
 5. Copia el **identificador de cliente** (termina en
    `.apps.googleusercontent.com`) y pégalo en Ajustes → Cuenta.
 
-No hace falta el secreto de cliente. CloudTerm usa PKCE, que demuestra la
-identidad sin custodiarlo.
+No hace falta el secreto de cliente. CloudTerm usa PKCE. Al pulsar **Iniciar
+sesión con Google** se abre el navegador, inicias sesión y la cuenta se vincula
+sola.
 
 ### Qué se pide
 
@@ -73,11 +74,15 @@ La copia se guarda ahí, en un fichero llamado `cloudterm-backup.json`.
 
 1. Entra en [GitHub → Settings → Developer settings → OAuth Apps](https://github.com/settings/developers)
    y pulsa **New OAuth App**.
-2. Rellena el nombre y la URL que quieras (no se usan para nada más).
-3. **Marca «Enable Device Flow»**. Es imprescindible.
-4. Copia el **Client ID** y pégalo en Ajustes → Cuenta.
+2. Homepage: `https://github.com/pilahito/cloudterm`.
+3. **Authorization callback URL:** `http://127.0.0.1/callback`
+   (GitHub acepta cualquier puerto en loopback).
+4. Copia el **Client ID** y el **Client secret** y pégalos en Ajustes → Cuenta.
+   El secreto va al **llavero**, no al disco.
 
-No hace falta el Client Secret.
+Al pulsar **Iniciar sesión con GitHub** se abre el navegador. Inicias sesión
+ahí, GitHub vuelve a CloudTerm y la cuenta queda vinculada. **No hay que
+escribir ningún código.**
 
 ### Por qué «device flow»
 

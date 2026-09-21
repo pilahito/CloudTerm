@@ -3,18 +3,18 @@
 
 //! Inicio de sesión con GitHub.
 //!
-//! GitHub **no admite PKCE** y exige un secreto de cliente para canjear el
-//! código. Un secreto dentro de un binario de escritorio no es un secreto: quien
-//! tenga el ejecutable puede extraerlo. Por eso se usa el **flujo de
-//! dispositivo** (`device flow`), pensado justo para aplicaciones que no pueden
-//! custodiar un secreto: solo hace falta el identificador de cliente.
+//! Se abre el **navegador** con el flujo de código de autorización y PKCE, igual
+//! que Google. El usuario inicia sesión en github.com y GitHub redirige a
+//! `127.0.0.1`. No hay que escribir ningún código a mano.
 //!
-//! El usuario ve un código corto, lo escribe en `github.com/login/device` y la
-//! aplicación va preguntando si ya lo ha hecho.
+//! GitHub todavía pide a veces el *client secret* al canjear el código. Si el
+//! usuario lo pega en Ajustes, se guarda en el llavero. Si no hace falta, se
+//! omite.
 
 use super::{Account, Tokens};
 use std::time::Duration;
 
+const AUTHORIZE_URL: &str = "https://github.com/login/oauth/authorize";
 const DEVICE_CODE_URL: &str = "https://github.com/login/device/code";
 const TOKEN_URL: &str = "https://github.com/login/oauth/access_token";
 const USER_URL: &str = "https://api.github.com/user";
@@ -54,6 +54,99 @@ pub enum PollOutcome {
     Expired,
     /// El usuario lo rechazó.
     Denied,
+}
+
+/// URL que se abre en el navegador.
+pub fn authorize_url(client_id: &str, redirect_uri: &str, state: &str, challenge: &str) -> String {
+    let mut url = url::Url::parse(AUTHORIZE_URL).expect("URL de GitHub válida");
+    url.query_pairs_mut()
+        .append_pair("client_id", client_id)
+        .append_pair("redirect_uri", redirect_uri)
+        .append_pair("scope", SCOPES)
+        .append_pair("state", state)
+        .append_pair("code_challenge", challenge)
+        .append_pair("code_challenge_method", "S256");
+    url.to_string()
+}
+
+/// Canjea el código de autorización por un token.
+pub async fn exchange_code(
+    client: &reqwest::Client,
+    client_id: &str,
+    client_secret: Option<&str>,
+    code: &str,
+    verifier: &str,
+    redirect_uri: &str,
+) -> Result<Tokens, String> {
+    let mut form = vec![
+        ("client_id", client_id),
+        ("code", code),
+        ("redirect_uri", redirect_uri),
+        ("grant_type", "authorization_code"),
+        ("code_verifier", verifier),
+    ];
+    if let Some(secret) = client_secret.filter(|s| !s.is_empty()) {
+        form.push(("client_secret", secret));
+    }
+
+    let response = client
+        .post(TOKEN_URL)
+        .header("Accept", "application/json")
+        .form(&form)
+        .send()
+        .await
+        .map_err(|err| format!("no se pudo canjear el código: {err}"))?;
+
+    let status = response.status();
+    let body = response
+        .text()
+        .await
+        .map_err(|err| format!("respuesta ilegible de GitHub: {err}"))?;
+
+    if !status.is_success() {
+        return Err(format!("GitHub rechazó el canje ({status}): {body}"));
+    }
+
+    tokens_from_github(&body)
+}
+
+pub fn tokens_from_github(body: &str) -> Result<Tokens, String> {
+    let value: serde_json::Value = serde_json::from_str(body)
+        .map_err(|err| format!("respuesta ilegible de GitHub: {err} ({body})"))?;
+
+    if let Some(error) = value.get("error").and_then(|v| v.as_str()) {
+        let detail = value
+            .get("error_description")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        if error == "incorrect_client_credentials" || detail.contains("client_secret") {
+            return Err(
+                "GitHub pide el secreto de cliente para vincular la cuenta por el navegador. Pégalo en Ajustes → Cuenta; se guarda en el llavero."
+                    .to_string(),
+            );
+        }
+        return Err(format!("GitHub rechazó el canje: {error} {detail}"));
+    }
+
+    let access_token = value
+        .get("access_token")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "GitHub no devolvió ningún token de acceso".to_string())?
+        .to_string();
+
+    Ok(Tokens {
+        access_token,
+        refresh_token: value
+            .get("refresh_token")
+            .and_then(|v| v.as_str())
+            .map(str::to_string),
+        expires_at: None,
+        scopes: value
+            .get("scope")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string(),
+    })
 }
 
 fn client_with_headers() -> Result<reqwest::Client, String> {
@@ -307,6 +400,41 @@ pub fn http_client() -> Result<reqwest::Client, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn authorize_url_opens_github_in_the_browser() {
+        let url = authorize_url(
+            "Iv1.abc",
+            "http://127.0.0.1:4444/callback",
+            "el-state",
+            "el-reto",
+        );
+        assert!(url.starts_with(AUTHORIZE_URL), "{url}");
+        for fragment in [
+            "code_challenge=el-reto",
+            "code_challenge_method=S256",
+            "state=el-state",
+            "redirect_uri=http%3A%2F%2F127.0.0.1%3A4444%2Fcallback",
+        ] {
+            assert!(url.contains(fragment), "falta {fragment} en {url}");
+        }
+    }
+
+    #[test]
+    fn tokens_from_github_reads_the_access_token() {
+        let tokens = tokens_from_github(r#"{"access_token":"gho_x","scope":"gist"}"#).unwrap();
+        assert_eq!(tokens.access_token, "gho_x");
+        assert_eq!(tokens.scopes, "gist");
+    }
+
+    #[test]
+    fn tokens_from_github_explains_a_missing_secret() {
+        let err = tokens_from_github(
+            r#"{"error":"incorrect_client_credentials","error_description":"The client_secret passed does not match."}"#,
+        )
+        .unwrap_err();
+        assert!(err.contains("secreto de cliente"), "{err}");
+    }
 
     #[test]
     fn parses_a_device_code() {

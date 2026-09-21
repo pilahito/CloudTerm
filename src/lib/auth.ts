@@ -16,6 +16,7 @@ export type AuthProvider = "google" | "github";
 export interface AuthConfig {
   googleClientId: string;
   githubClientId: string;
+  githubClientSecret?: string;
 }
 
 export interface Account {
@@ -29,6 +30,7 @@ export interface Account {
 export interface AuthState {
   config: AuthConfig;
   account: Account | null;
+  hasGithubSecret?: boolean;
 }
 
 /** Lo que hay que enseñarle al usuario para autorizar en GitHub. */

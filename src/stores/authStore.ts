@@ -32,6 +32,7 @@ interface AuthStoreState {
   config: AuthConfig;
   account: Account | null;
   loaded: boolean;
+  hasGithubSecret: boolean;
   /** Proveedor cuyo inicio de sesión está en curso, si hay alguno. */
   busy: AuthProvider | null;
   /** Código que el usuario debe escribir en GitHub, mientras dura el flujo. */
@@ -60,6 +61,7 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   config: EMPTY_CONFIG,
   account: null,
   loaded: false,
+  hasGithubSecret: false,
   busy: null,
   device: null,
   syncing: false,
@@ -68,7 +70,12 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   load: async () => {
     try {
       const state = await authState();
-      set({ config: state.config, account: state.account, loaded: true });
+      set({
+        config: state.config,
+        account: state.account,
+        loaded: true,
+        hasGithubSecret: Boolean(state.hasGithubSecret),
+      });
     } catch {
       // Fuera de Tauri (servidor de desarrollo en el navegador) no hay `invoke`.
       set({ loaded: true });
@@ -80,8 +87,8 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
       const state = await authConfigSet(config);
       set({
         config: state.config,
-        // Cambiar de aplicación de cliente invalida la sesión anterior.
         account: state.account,
+        hasGithubSecret: Boolean(state.hasGithubSecret),
       });
       return true;
     } catch {

@@ -14,7 +14,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { useUiStore } from "../../stores/uiStore";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { useConnectionStore } from "../../stores/connectionStore";
-import { onDeviceCode, providerLabel, type AuthProvider } from "../../lib/auth";
+import { providerLabel, type AuthProvider } from "../../lib/auth";
 import { openExternal } from "../../lib/links";
 import { ProviderIcon } from "../Brand";
 import { cx } from "../../lib/utils";
@@ -62,19 +62,19 @@ export function AccountSettings() {
   const config = useAuthStore((s) => s.config);
   const account = useAuthStore((s) => s.account);
   const busy = useAuthStore((s) => s.busy);
-  const device = useAuthStore((s) => s.device);
   const syncing = useAuthStore((s) => s.syncing);
   const lastSync = useAuthStore((s) => s.lastSync);
   const load = useAuthStore((s) => s.load);
   const saveConfig = useAuthStore((s) => s.saveConfig);
   const signIn = useAuthStore((s) => s.signIn);
   const signOut = useAuthStore((s) => s.signOut);
-  const setDevice = useAuthStore((s) => s.setDevice);
   const push = useAuthStore((s) => s.push);
   const pull = useAuthStore((s) => s.pull);
 
   const [googleId, setGoogleId] = useState("");
   const [githubId, setGithubId] = useState("");
+  const [githubSecret, setGithubSecret] = useState("");
+  const hasGithubSecret = useAuthStore((s) => s.hasGithubSecret);
 
   useEffect(() => {
     void load();
@@ -85,37 +85,18 @@ export function AccountSettings() {
     setGithubId(config.githubClientId);
   }, [config.googleClientId, config.githubClientId]);
 
-  // El código de GitHub llega por evento, no como respuesta del comando: el
-  // comando no termina hasta que el usuario autoriza.
-  useEffect(() => {
-    let alive = true;
-    let off: (() => void) | null = null;
-
-    void onDeviceCode((code) => {
-      if (alive) setDevice(code);
-    })
-      .then((unlisten) => {
-        if (alive) off = unlisten;
-        else unlisten();
-      })
-      .catch(() => {
-        /* sin Tauri no hay eventos */
-      });
-
-    return () => {
-      alive = false;
-      off?.();
-    };
-  }, [setDevice]);
-
   const configChanged =
-    googleId.trim() !== config.googleClientId || githubId.trim() !== config.githubClientId;
+    googleId.trim() !== config.googleClientId ||
+    githubId.trim() !== config.githubClientId ||
+    githubSecret.trim() !== "";
 
   const onSave = async () => {
     const ok = await saveConfig({
       googleClientId: googleId.trim(),
       githubClientId: githubId.trim(),
+      githubClientSecret: githubSecret.trim() || undefined,
     });
+    if (ok) setGithubSecret("");
     if (ok) {
       pushToast("success", t("account.credentialsSaved"), t("account.credentialsSavedDetail"));
     } else {
@@ -291,6 +272,23 @@ export function AccountSettings() {
                     className={cx(INPUT, "font-mono")}
                   />
                 </Field>
+                {provider === "github" && (
+                  <Field
+                    label={t("account.githubSecretLabel")}
+                    hint={
+                      hasGithubSecret ? t("account.githubSecretStored") : t("account.githubSecretHint")
+                    }
+                  >
+                    <input
+                      type="password"
+                      value={githubSecret}
+                      onChange={(e) => setGithubSecret(e.target.value)}
+                      placeholder={hasGithubSecret ? "••••••••" : ""}
+                      autoComplete="off"
+                      className={cx(INPUT, "font-mono")}
+                    />
+                  </Field>
+                )}
 
                 {/* El paso que bloquea a todo el mundo es crear la aplicación de
                     cliente. Se abre la consola del proveedor con un clic, en vez
@@ -323,24 +321,13 @@ export function AccountSettings() {
                       // un vistazo con cuál vas a entrar.
                       <ProviderIcon provider={provider} size={12} />
                     )}
-                    {waiting
-                      ? provider === "github"
-                        ? t("account.waitingAuthorization")
-                        : t("account.waitingBrowser")
-                      : t("account.signInWith", { provider: providerLabel(provider) })}
+                    {waiting ? t("account.waitingBrowser") : t("account.signInWith", { provider: providerLabel(provider) })}
                   </button>
                 </div>
-
-                {/* El flujo de GitHub muestra un código que hay que escribir. */}
-                {waiting && provider === "github" && device && (
-                  <div className="mt-2 rounded-md border border-accent/40 bg-accent/10 p-2">
-                    <div className="text-[10px] text-muted">
-                      {t("account.deviceCodeInstruction", { uri: device.verificationUri })}
-                    </div>
-                    <div className="font-mono text-base tracking-[0.2em] text-accent">
-                      {device.userCode}
-                    </div>
-                  </div>
+                {waiting && (
+                  <p className="mt-1.5 text-[10px] leading-relaxed text-muted">
+                    {t("account.browserOpened")}
+                  </p>
                 )}
               </div>
             );
