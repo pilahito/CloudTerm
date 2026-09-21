@@ -1,10 +1,3 @@
-> **Este proyecto está desactualizado.**
->
-> El desarrollo activo continúa en **[AdministradorArchivos](https://github.com/pilahito/AdministradorArchivos)**.
-> Ve allí para descargas, issues y el login con Google / GitHub (se abre el navegador y eliges la cuenta).
-
----
-
 <div align="center">
 
 ![CloudTerm](docs/brand/banner-readme.png)
@@ -18,19 +11,19 @@ Sin cuenta obligatoria, sin suscripción y sin servidores intermedios: todo se
 queda en tu equipo.
 
 [![Licencia](https://img.shields.io/badge/licencia-AGPL--3.0-blue)](LICENSE)
-[![Estado](https://img.shields.io/badge/estado-desactualizado-lightgrey)](https://github.com/pilahito/AdministradorArchivos)
+[![Idiomas](https://img.shields.io/badge/idiomas-espa%C3%B1ol%20%C2%B7%20english%20%C2%B7%20%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-success)](docs/IDIOMAS.md)
 
-**Proyecto actual → [pilahito/AdministradorArchivos](https://github.com/pilahito/AdministradorArchivos)**
+**Descargas → [Releases de este repo](https://github.com/pilahito/CloudTerm/releases)**
 
-Descargas antiguas → [Releases de este repo](https://github.com/pilahito/CloudTerm/releases)
+El repo anterior [AdministradorArchivos](https://github.com/pilahito/AdministradorArchivos) está desactualizado y apunta aquí.
 
 </div>
 
 ---
 
-## Descargar e instalar (archivo)
+## Descargar e instalar
 
-Estas builds se dejan por compatibilidad. Lo nuevo sale de AdministradorArchivos.
+Todo sale de **una sola página**: [github.com/pilahito/CloudTerm/releases](https://github.com/pilahito/CloudTerm/releases)
 
 | Plataforma | Archivo | Enlace |
 |---|---|---|
@@ -38,6 +31,8 @@ Estas builds se dejan por compatibilidad. Lo nuevo sale de AdministradorArchivos
 | **Linux** | Paquete .deb | [CloudTerm_1.0.5_amd64.deb](https://github.com/pilahito/CloudTerm/releases/download/v1.0.5/CloudTerm_1.0.5_amd64.deb) |
 | **Linux** | AppImage | [CloudTerm_1.0.5_amd64.AppImage](https://github.com/pilahito/CloudTerm/releases/download/v1.0.5/CloudTerm_1.0.5_amd64.AppImage) |
 | **Android** | APK firmado | [CloudTerm-android-1.3.5.apk](https://github.com/pilahito/CloudTerm-Android/releases/download/v1.3.5/CloudTerm-android-1.3.5.apk) |
+
+Código Android: [pilahito/CloudTerm-Android](https://github.com/pilahito/CloudTerm-Android).
 
 ---
 
