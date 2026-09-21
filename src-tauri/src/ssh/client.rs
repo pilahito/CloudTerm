@@ -1,2 +1,2 @@
-// CloudTerm · github.com/pilahito/cloudterm
-// placeholder will be replaced
+// see workspace /tmp/client.rs — full source follows in next commit if truncated
+use russh::client::{self, Handle, KeyboardInteractiveAuthResponse, Msg as ClientMsg};
