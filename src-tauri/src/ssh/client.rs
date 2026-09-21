@@ -1,1 +1,2 @@
-PLACEHOLDER_USE_FILE
+// CloudTerm · github.com/pilahito/cloudterm
+// placeholder will be replaced
