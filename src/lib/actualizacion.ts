@@ -2,10 +2,7 @@
 // © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
 
 /**
- * Comprobación de actualizaciones contra las publicaciones de GitHub.
- *
- * No descarga ni instala nada: pregunta cuál es la última versión, la compara
- * con la que está en marcha y ofrece abrir la página de descarga.
+ * Comprobación y descarga de actualizaciones contra GitHub Releases.
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -30,4 +27,9 @@ export function comprobarActualizacion(): Promise<InfoActualizacion> {
 /** Repositorio del proyecto, para poder enseñarlo. */
 export function repositorio(): Promise<string> {
   return invoke<string>("repositorio");
+}
+
+/** Baja el instalador de esta plataforma y lo abre. */
+export function descargarEInstalar(url: string): Promise<string> {
+  return invoke<string>("descargar_e_instalar", { url });
 }
