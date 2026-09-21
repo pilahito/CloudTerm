@@ -1,8 +1,5 @@
 name: Build installers
 
-# Compila el .exe NSIS (Windows) y los .deb / AppImage (Linux amd64 y arm64).
-# Se lanza al empujar una etiqueta v*, al publicar una Release, o a mano.
-
 on:
   push:
     tags:
@@ -90,19 +87,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v1.0.5
-          releaseName: CloudTerm 1.0.5
+          tagName: v1.0.6
+          releaseName: CloudTerm 1.0.6
           releaseBody: |
-            ## CloudTerm 1.0.5
+            ## CloudTerm 1.0.6
 
-            Instaladores de escritorio con el arreglo SSH de Windows/Linux.
+            Actualizar **desde la app**: Ayuda → Buscar actualizaciones descarga
+            el instalador de esta plataforma y lo abre.
 
-            - SSH keyboard-interactive (2FA/TOTP de servidor)
-            - Resolución IPv4 primero
-            - Fallback de PTY si el servidor no acepta el modo pedido
-            - Windows NSIS (.exe), Linux .deb y AppImage
-
-            APK nativo: https://github.com/pilahito/CloudTerm-Android/releases
+            APK nativo (también actualiza desde la app):
+            https://github.com/pilahito/CloudTerm-Android/releases/tag/v1.3.5
           releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.destino }} --bundles ${{ matrix.paquetes }}
