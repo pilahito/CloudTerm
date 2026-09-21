@@ -56,41 +56,7 @@ jobs:
         run: npx tauri android init
 
       - name: Parchear Gradle para firmar
-        shell: bash
-        run: |
-          set -euo pipefail
-          FILE="src-tauri/gen/android/app/build.gradle.kts"
-          test -f "$FILE"
-
-          if ! grep -q "import java.util.Properties" "$FILE"; then
-            sed -i '1i import java.util.Properties\nimport java.io.FileInputStream' "$FILE"
-          fi
-
-          if ! grep -q "keystorePropertiesFile" "$FILE"; then
-            sed -i '/^android {/i \
-val keystorePropertiesFile = rootProject.file("keystore.properties")\
-val keystoreProperties = Properties()\
-if (keystorePropertiesFile.exists()) {\
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))\
-}' "$FILE"
-          fi
-
-          if ! grep -q "signingConfigs" "$FILE"; then
-            sed -i '/^    buildTypes {/i \
-    signingConfigs {\
-        create("release") {\
-            keyAlias = keystoreProperties["keyAlias"] as String\
-            keyPassword = keystoreProperties["keyPassword"] as String\
-            storeFile = file(keystoreProperties["storeFile"] as String)\
-            storePassword = keystoreProperties["storePassword"] as String\
-        }\
-    }' "$FILE"
-          fi
-
-          if ! grep -q 'signingConfig = signingConfigs.getByName("release")' "$FILE"; then
-            sed -i '/^            isMinifyEnabled = false/a \
-            signingConfig = signingConfigs.getByName("release")' "$FILE"
-          fi
+        run: bash scripts/parchear-android-gradle.sh
 
       - name: Preparar la firma
         shell: bash
