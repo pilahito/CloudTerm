@@ -1,0 +1,37 @@
+{
+  "application_type": "native",
+  "client_type": "desktop",
+  "product": "CloudTerm",
+  "homepage": "https://github.com/pilahito/CloudTerm",
+  "redirect_uris": [
+    "http://127.0.0.1/callback",
+    "http://127.0.0.1:*/callback"
+  ],
+  "grant_types": ["authorization_code", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"],
+  "pkce": "S256",
+  "google": {
+    "auth_uri": "https://accounts.google.com/o/oauth2/v2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "userinfo_uri": "https://openidconnect.googleapis.com/v1/userinfo",
+    "access_type": "offline",
+    "prompt": "consent",
+    "scopes": [
+      "openid",
+      "email",
+      "profile",
+      "https://www.googleapis.com/auth/drive.appdata"
+    ],
+    "console": "https://console.cloud.google.com/apis/credentials",
+    "app_type": "Desktop app"
+  },
+  "github": {
+    "auth_uri": "https://github.com/login/oauth/authorize",
+    "token_uri": "https://github.com/login/oauth/access_token",
+    "device_uri": "https://github.com/login/device/code",
+    "user_uri": "https://api.github.com/user",
+    "scopes": ["read:user", "user:email", "gist"],
+    "console": "https://github.com/settings/developers",
+    "callback": "http://127.0.0.1/callback",
+    "enable_device_flow": true
+  }
+}
