@@ -14,7 +14,7 @@ queda en tu equipo.
 [![Idiomas](https://img.shields.io/badge/idiomas-espa%C3%B1ol%20%C2%B7%20english%20%C2%B7%20%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-success)](docs/IDIOMAS.md)
 [![Traducciones](https://github.com/pilahito/cloudterm/actions/workflows/idiomas.yml/badge.svg)](https://github.com/pilahito/cloudterm/actions/workflows/idiomas.yml)
 
-![Vídeo de ejemplo](docs/capturas/ejemplo.mp4)
+![Vídeo de ejemplo](docs/capturas/ejemplo.gif)
 
 </div>
 
