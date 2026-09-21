@@ -117,6 +117,12 @@ iconos en su sitio. Se quita con `./scripts/instalar.sh --quitar`.
 
 También hay `packaging/PKGBUILD` para Arch.
 
+### Android
+
+La app **nativa** (Kotlin, no Tauri) está en
+[pilahito/CloudTerm-Android](https://github.com/pilahito/CloudTerm-Android):
+terminal SSH, SFTP y el mismo icono. Se genera el APK en Actions → *APK de Android*.
+
 ### Windows y macOS
 Los instaladores se generan en cada publicación, en la pestaña
 [**Releases**](https://github.com/pilahito/cloudterm/releases).
