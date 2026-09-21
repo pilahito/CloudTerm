@@ -38,20 +38,30 @@
     "active": true,
     "targets": "all",
     "category": "DeveloperTool",
-    "shortDescription": "Terminal SSH/SFTP con asistente IA",
-    "longDescription": "CloudTerm es un cliente de terminal SSH/SFTP de escritorio con transferencia de archivos, gestión de credenciales en el llavero del sistema y un asistente IA integrado.",
+    "publisher": "pilahito",
+    "homepage": "https://github.com/pilahito/cloudterm",
+    "shortDescription": "Cliente SSH y SFTP de escritorio con soporte de Pixel Agents",
+    "longDescription": "CloudTerm es un cliente SSH y SFTP de escritorio: terminal remota, transferencia de archivos, Pixel Agents (monitoreo visual de agentes) y un asistente IA. Repositorio: https://github.com/pilahito/cloudterm",
     "copyright": "© pilahito — GNU AGPL-3.0-or-later",
     "license": "AGPL-3.0-or-later",
+    "licenseFile": "../LICENSE",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
+      "icons/512x512.png",
       "icons/icon.icns",
       "icons/icon.ico"
     ],
     "linux": {
       "deb": {
-        "depends": []
+        "depends": [],
+        "section": "net",
+        "priority": "optional",
+        "desktopTemplate": "../packaging/linux/cloudterm.desktop"
+      },
+      "appimage": {
+        "bundleMediaFramework": false
       }
     },
     "windows": {
@@ -67,7 +77,16 @@
           "SimpChinese"
         ],
         "displayLanguageSelector": true,
-        "installerIcon": "icons/icon.ico",
+        "installerIcon": "../packaging/installer/icon.ico",
+        "uninstallerIcon": "../packaging/installer/icon.ico",
+        "headerImage": "../packaging/installer/installer-header.bmp",
+        "sidebarImage": "../packaging/installer/installer-sidebar.bmp",
+        "installerHooks": "../packaging/nsis/hooks.nsh",
+        "customLanguageFiles": {
+          "English": "../packaging/nsis/English.nsh",
+          "Spanish": "../packaging/nsis/Spanish.nsh",
+          "SimpChinese": "../packaging/nsis/SimpChinese.nsh"
+        },
         "compression": "lzma"
       }
     }

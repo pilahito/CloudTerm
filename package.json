@@ -8,7 +8,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "idiomas": "node scripts/validar-idiomas.mjs"
+    "idiomas": "node scripts/validar-idiomas.mjs",
+    "brand:installer": "python packaging/installer/generar_recursos.py",
+    "tauri:build": "npm run brand:installer && npm run tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

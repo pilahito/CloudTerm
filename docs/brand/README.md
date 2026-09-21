@@ -11,6 +11,8 @@ nada está dibujado a mano ni es binario opaco.
 | `banner-buymeacoffee.png` | 1500 × 1000 | Imagen de portada de Buy Me a Coffee |
 | `banner-readme.png` | 1280 × 400 | Cabecera del README y del repositorio |
 | `icon-1024.png` | 1024 × 1024 | Icono maestro de la aplicación |
+| `icon-512.png` | 512 × 512 | Icono Linux (hicolor) |
+| `packaging/installer/` | BMP/ICO | Banners NSIS y `icon.ico` — ver `packaging/installer/README.md` |
 | `icon-32-preview.png` · `icon-128-preview.png` | — | Comprobación de legibilidad a tamaño pequeño |
 | `generar_brand.py` | — | El generador (SVG) |
 | `*.svg` | vectorial | Fuentes editables de todo lo anterior |

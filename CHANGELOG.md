@@ -16,6 +16,14 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 - Fuente por defecto: Cascadia Code. WebView2 no se duerme con la ventana al fondo (la terminal sigue viva).
 - El instalador descarga WebView2 si falta.
 
+### Instaladores
+
+- El .exe de Windows usa banners NSIS propios (cabecera y lateral), textos en
+  español/inglés/chino, enlace a GitHub en la página final y desinstalador
+  `Uninstall CloudTerm.exe`.
+- Linux genera `.deb` y AppImage con el `.desktop` `Development;Network;TerminalEmulator`.
+- Flujo `.github/workflows/build-installers.yml` (Windows x64, Linux amd64 y arm64).
+
 ### Documentación
 
 - El vídeo de ejemplo (`CONTEXTO__Estás_construyendo_l.mp4`) vive en

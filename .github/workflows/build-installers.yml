@@ -1,0 +1,99 @@
+name: Build installers
+
+# Compila el .exe NSIS (Windows) y los .deb / AppImage (Linux amd64 y arm64).
+# Se lanza al empujar una etiqueta v*, al publicar una Release, o a mano.
+
+on:
+  push:
+    tags:
+      - "v*"
+  release:
+    types: [published]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  compilar:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sistema: windows-latest
+            destino: x86_64-pc-windows-msvc
+            paquetes: nsis
+          - sistema: ubuntu-22.04
+            destino: x86_64-unknown-linux-gnu
+            paquetes: deb,appimage
+          - sistema: ubuntu-24.04-arm
+            destino: aarch64-unknown-linux-gnu
+            paquetes: deb,appimage
+
+    runs-on: ${{ matrix.sistema }}
+    name: ${{ matrix.destino }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Python (banners NSIS)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pillow
+        run: pip install pillow
+
+      - name: Regenerar banners e iconos
+        run: python packaging/installer/generar_recursos.py
+
+      - name: Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.destino }}
+
+      - name: Caché de Cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Dependencias de Linux
+        if: startsWith(matrix.sistema, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            build-essential \
+            curl wget file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            fonts-dejavu-core
+
+      - name: Dependencias del frontend
+        run: npm ci
+
+      - name: Comprobar tipos
+        run: npx tsc --noEmit
+
+      - name: Compilar y publicar
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('CloudTerm {0}', github.ref_name) || '' }}
+          releaseBody: ${{ startsWith(github.ref, 'refs/tags/') && 'Instaladores de escritorio: Windows (.exe NSIS) y Linux (.deb, AppImage).' || '' }}
+          releaseDraft: false
+          prerelease: false
+          args: --target ${{ matrix.destino }} --bundles ${{ matrix.paquetes }}
