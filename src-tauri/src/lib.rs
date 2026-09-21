@@ -2,14 +2,6 @@
 // © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
 
 //! CloudTerm — backend Tauri.
-//!
-//! Mapa de módulos:
-//!
-//! * [`config`] — ajustes persistentes de la app y secretos en el llavero del SO.
-//! * [`db`]     — almacén local (JSON sobre disco) para conexiones e historial.
-//! * [`ssh`]    — sesiones SSH y sondeo de hosts (transporte `russh` + `tokio`).
-//! * [`pty`]    — terminal local (PTY en Unix, PowerShell/`cmd` en Windows).
-//! * [`sftp`]   — navegación y transferencia de archivos (`russh-sftp`, `suppaftp`).
 
 pub mod config;
 pub mod db;
@@ -18,6 +10,7 @@ pub mod ssh;
 pub mod pty;
 pub mod ai;
 pub mod actualizacion;
+pub mod actualizacion_install;
 pub mod idiomas;
 pub mod auth;
 
@@ -33,7 +26,6 @@ pub struct AppInfo {
     pub contact: &'static str,
 }
 
-/// Metadatos de la aplicación para la pantalla «Acerca de».
 #[tauri::command]
 fn app_info() -> AppInfo {
     AppInfo {
@@ -159,7 +151,7 @@ pub fn run() {
             auth::destinos::destinos_carpeta_sugerida,
             auth::destinos::destinos_abrir,
             actualizacion::comprobar_actualizacion,
-            actualizacion::descargar_e_instalar,
+            actualizacion_install::descargar_e_instalar,
             actualizacion::repositorio,
             idiomas::idiomas_externos,
             idiomas::idiomas_carpeta,
