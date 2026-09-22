@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import ace from "ace-builds/src-noconflict/ace";
+import type { AceEditorInstance } from "ace-builds/src-noconflict/ace";
 import "ace-builds/src-noconflict/mode-kotlin";
 import "ace-builds/src-noconflict/mode-javascript";
 import "ace-builds/src-noconflict/mode-python";
@@ -43,7 +44,7 @@ function modoPara(path: string): string {
 
 export function AceEditor({ path, value, onChange, onSave, readOnly = false }: AceEditorProps) {
   const contenedor = useRef<HTMLDivElement | null>(null);
-  const editor = useRef<ace.Ace.Editor | null>(null);
+  const editor = useRef<AceEditorInstance | null>(null);
   const guardar = useRef(onSave);
   guardar.current = onSave;
 

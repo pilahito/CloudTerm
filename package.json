@@ -1,5 +1,60 @@
 {
-	"dependencies": {
-		"ace-builds": "^1.44.0"
-	}
+  "name": "cloudterm",
+  "private": "true",
+  "version": "1.0.8",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "idiomas": "node scripts/validar-idiomas.mjs",
+    "brand:installer": "python packaging/installer/generar_recursos.py",
+    "tauri:build": "npm run brand:installer && npm run tauri build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-os": "^2.3.2",
+    "@tauri-apps/plugin-shell": "^2.3.6",
+    "ace-builds": "^1.44.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.45.0",
+    "motion": "^13.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0",
+    "xterm-addon-web-links": "^0.9.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^6.0.2",
+    "autoprefixer": "^10.6.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
+  },
+  "license": "AGPL-3.0-or-later",
+  "description": "CloudTerm — terminal SSH/SFTP con asistente IA",
+  "author": "pilahito <57416155+pilahito@users.noreply.github.com>",
+  "homepage": "https://github.com/pilahito/cloudterm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pilahito/cloudterm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pilahito/cloudterm/issues"
+  },
+  "keywords": [
+    "tauri",
+    "ssh",
+    "sftp",
+    "terminal",
+    "react"
+  ]
 }

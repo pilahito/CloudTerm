@@ -34,11 +34,11 @@ const CHAT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(600);
 /* Tipos                                                                      */
 /* -------------------------------------------------------------------------- */
 
+pub mod models;
+
 /// Dialecto que habla un proveedor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub mod models;
-
 pub enum AiProviderKind {
     /// `POST /api/chat`, líneas JSON.
     Ollama,
