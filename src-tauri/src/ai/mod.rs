@@ -37,6 +37,8 @@ const CHAT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(600);
 /// Dialecto que habla un proveedor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+pub mod models;
+
 pub enum AiProviderKind {
     /// `POST /api/chat`, líneas JSON.
     Ollama,
@@ -80,6 +82,16 @@ impl Default for AiConfig {
                     kind: AiProviderKind::Ollama,
                     base_url: "http://127.0.0.1:11434".to_string(),
                     model: "qwen3-local:8b".to_string(),
+                    api_key_env: None,
+                },
+                AiProviderConfig {
+                    id: "llamacpp".to_string(),
+                    label: "llama.cpp (local, en el movil)".to_string(),
+                    kind: AiProviderKind::OpenAi,
+                    // llama-server de llama.cpp expone API compatible con OpenAI.
+                    // En el movil: llama-server -m modelo.gguf --host 127.0.0.1 --port 8080
+                    base_url: "http://127.0.0.1:8080/v1".to_string(),
+                    model: String::new(),
                     api_key_env: None,
                 },
                 AiProviderConfig {

@@ -70,6 +70,10 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             app_info,
+            ai::models::detectar_hardware,
+            ai::models::modelos_compatibles,
+            ai::models::descargar_modelo,
+            ai::models::comando_llama_server,
             config::load_config,
             config::save_config,
             config::secrets::secrets_set,

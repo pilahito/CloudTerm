@@ -9,6 +9,7 @@ import { useSettingsStore } from "../../stores/settingsStore";
 import { aiHasApiKey, aiSetApiKey, aiTestProvider } from "../../lib/ai";
 import { cx } from "../../lib/utils";
 import { useT } from "../../i18n";
+import { HardwarePanel } from "./HardwarePanel";
 
 const INPUT =
   "w-full rounded-md border border-border bg-bg/60 px-2 py-1.5 text-[11px] text-text placeholder:text-muted focus:border-accent/60 focus:outline-none";
@@ -139,11 +140,17 @@ export function AISettings() {
                 <option key={item.id} value={item.id}>
                   {item.label}
                   {" · "}
-                  {t(item.kind === "ollama" ? "common.local" : "common.remote")}
+                  {t(
+                    item.kind === "ollama" || /127\.0\.0\.1|localhost/i.test(item.baseUrl)
+                      ? "common.local"
+                      : "common.remote",
+                  )}
                 </option>
               ))}
             </select>
           </Field>
+
+          <HardwarePanel />
 
           <Field label={t("ai.baseUrl")} hint={t("ai.baseUrlHint")}>
             <input

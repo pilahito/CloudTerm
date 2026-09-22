@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ChevronLeft, ChevronRight, X, Check, Sparkles } from "lucide-react";
 import { useSettingsStore } from "../../stores/settingsStore";
 import { LANGUAGES, useT } from "../../i18n";
+import { usePlatform } from "../../hooks/usePlatform";
 import { cx } from "../../lib/utils";
 
 /** De qué lado se coloca la burbuja respecto al elemento señalado. */
@@ -20,6 +21,13 @@ interface Paso {
   /** Selector del elemento al que apuntar; sin él, el paso va centrado. */
   objetivo?: string;
   lado?: Lado;
+  /**
+   * Texto alternativo para móvil, donde no hay teclado.
+   *
+   * Solo lo usan los pasos que nombran un atajo: en Android decirle a alguien
+   * que pulse `Ctrl+K` es pedirle algo imposible.
+   */
+  cuerpoMovil?: string;
 }
 
 /**
@@ -66,7 +74,13 @@ const PASOS: Paso[] = [
     objetivo: '[data-tour="statusbar"]',
     lado: "top",
   },
-  { id: "listo", titulo: "tour.readyTitle", cuerpo: "tour.readyBody" },
+  {
+    id: "listo",
+    titulo: "tour.readyTitle",
+    cuerpo: "tour.readyBody",
+    // En móvil no hay teclado, así que no se le puede decir «pulsa Ctrl+K».
+    cuerpoMovil: "tour.readyBodyMobile",
+  },
 ];
 
 /** Rectángulo de un elemento, o `null` si no está en pantalla. */
@@ -136,6 +150,7 @@ export function Onboarding({ onDone }: Props) {
   const t = useT();
   const update = useSettingsStore((s) => s.update);
   const language = useSettingsStore((s) => s.settings.language);
+  const { isMobile: esMovil } = usePlatform();
 
   const [indice, setIndice] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -275,7 +290,9 @@ export function Onboarding({ onDone }: Props) {
           </header>
 
           <div className="space-y-3 px-4 py-3">
-            <p className="text-[11px] leading-relaxed text-muted">{t(paso.cuerpo)}</p>
+            <p className="text-[11px] leading-relaxed text-muted">
+              {t(esMovil && paso.cuerpoMovil ? paso.cuerpoMovil : paso.cuerpo)}
+            </p>
 
             {/* El primer paso es elegir idioma. */}
             {paso.id === "idioma" && (

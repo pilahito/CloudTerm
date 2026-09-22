@@ -661,6 +661,7 @@
   "tour.languageTitle": "选择语言",
   "tour.next": "下一步",
   "tour.readyBody": "就这些。按 Ctrl+K 打开命令面板查找任何操作。你可以随时从「帮助」重看本引导。",
+  "tour.readyBodyMobile": "就这些。你可以随时从「帮助」重看本引导。",
   "tour.readyTitle": "准备就绪",
   "tour.replay": "观看引导",
   "tour.skip": "跳过",
@@ -697,6 +698,7 @@
   "welcome.importHostsDetail": "来自 ~/.ssh/config",
   "welcome.newTerminal": "新建终端",
   "welcome.newTerminalDetail": "本地 Shell 或 SSH 会话",
+  "welcome.openPalette": "打开命令面板",
   "welcome.paletteHint": "按 {mod}{join}K 打开命令面板。",
   "welcome.pixelAgentsDetail": "你的等距像素舰队",
   "welcome.signIn": "使用 Google 或 GitHub 登录"

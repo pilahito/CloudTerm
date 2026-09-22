@@ -661,6 +661,7 @@
   "tour.languageTitle": "Choose your language",
   "tour.next": "Next",
   "tour.readyBody": "That is it. Press Ctrl+K for the command palette and find any action. You can watch this tour again from Help.",
+  "tour.readyBodyMobile": "That is it. You can watch this tour again from Help whenever you like.",
   "tour.readyTitle": "All set",
   "tour.replay": "Watch the tour",
   "tour.skip": "Skip",
@@ -697,6 +698,7 @@
   "welcome.importHostsDetail": "From ~/.ssh/config",
   "welcome.newTerminal": "New terminal",
   "welcome.newTerminalDetail": "Local shell or SSH session",
+  "welcome.openPalette": "Open the command palette",
   "welcome.paletteHint": "Press {mod}{join}K to open the command palette.",
   "welcome.pixelAgentsDetail": "Your fleet in isometric",
   "welcome.signIn": "Sign in with Google or GitHub"

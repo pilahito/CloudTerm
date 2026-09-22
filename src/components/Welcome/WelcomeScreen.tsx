@@ -1,7 +1,7 @@
 // CloudTerm · github.com/pilahito/cloudterm
 // © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
 
-import { Terminal, FileDown, Plus, Users, Sparkles, UserRound } from "lucide-react";
+import { Terminal, FileDown, Plus, Users, Sparkles, UserRound, Command } from "lucide-react";
 import { useUiStore } from "../../stores/uiStore";
 import { useTabStore } from "../../stores/tabStore";
 import { useAuthStore } from "../../stores/authStore";
@@ -80,7 +80,7 @@ function Action({ icon, title, detail, onClick }: ActionProps) {
 
 export function WelcomeScreen() {
   const t = useT();
-  const { modKey, modJoin } = usePlatform();
+  const { modKey, modJoin, isMobile: esMovil } = usePlatform();
   const openTab = useTabStore((s) => s.openTab);
   const setActiveView = useUiStore((s) => s.setActiveView);
   const setImportOpen = useUiStore((s) => s.setImportOpen);
@@ -140,21 +140,33 @@ export function WelcomeScreen() {
           </p>
         </div>
 
-        {/* Atajo Ctrl+K */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <kbd className="rounded-md border border-accent/50 bg-surface px-3 py-1.5 font-mono text-xs text-accent shadow-[0_0_18px_-6px_rgba(34,211,238,0.8)]">
-              {modKey}
-            </kbd>
-            <span className="text-xs text-muted">+</span>
-            <kbd className="rounded-md border border-accent/50 bg-surface px-3 py-1.5 font-mono text-xs text-accent shadow-[0_0_18px_-6px_rgba(34,211,238,0.8)]">
-              K
-            </kbd>
+        {/* En escritorio, el atajo. En móvil no hay teclado, así que se ofrece
+            un botón: la paleta de comandos hace lo mismo y se puede pulsar. */}
+        {esMovil ? (
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-accent/50 bg-surface px-4 py-2.5 text-xs font-medium text-accent shadow-[0_0_18px_-6px_rgba(34,211,238,0.8)] transition-opacity hover:opacity-90"
+          >
+            <Command size={14} />
+            {t("welcome.openPalette")}
+          </button>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <kbd className="rounded-md border border-accent/50 bg-surface px-3 py-1.5 font-mono text-xs text-accent shadow-[0_0_18px_-6px_rgba(34,211,238,0.8)]">
+                {modKey}
+              </kbd>
+              <span className="text-xs text-muted">+</span>
+              <kbd className="rounded-md border border-accent/50 bg-surface px-3 py-1.5 font-mono text-xs text-accent shadow-[0_0_18px_-6px_rgba(34,211,238,0.8)]">
+                K
+              </kbd>
+            </div>
+            <p className="text-[10px] text-muted">
+              {t("welcome.paletteHint", { mod: modKey, join: modJoin })}
+            </p>
           </div>
-          <p className="text-[10px] text-muted">
-            {t("welcome.paletteHint", { mod: modKey, join: modJoin })}
-          </p>
-        </div>
+        )}
 
         {/* Acciones rápidas */}
         <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4">

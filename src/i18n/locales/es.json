@@ -661,6 +661,7 @@
   "tour.languageTitle": "Elige tu idioma",
   "tour.next": "Siguiente",
   "tour.readyBody": "Ya está. Pulsa Ctrl+K para abrir la paleta de comandos y encontrar cualquier acción. Puedes volver a ver este tutorial desde Ayuda.",
+  "tour.readyBodyMobile": "Ya está. Puedes volver a ver este tutorial desde Ayuda cuando quieras.",
   "tour.readyTitle": "Listo",
   "tour.replay": "Ver el tutorial",
   "tour.skip": "Saltar",
@@ -697,6 +698,7 @@
   "welcome.importHostsDetail": "Desde ~/.ssh/config",
   "welcome.newTerminal": "Nueva terminal",
   "welcome.newTerminalDetail": "Shell local o sesión SSH",
+  "welcome.openPalette": "Abrir la paleta de comandos",
   "welcome.paletteHint": "Pulsa {mod}{join}K para abrir la paleta de comandos.",
   "welcome.pixelAgentsDetail": "Tu flota en isométrico",
   "welcome.signIn": "Iniciar sesión con Google o GitHub"
