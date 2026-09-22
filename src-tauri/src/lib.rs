@@ -53,6 +53,11 @@ pub fn run() {
         .manage(auth::local::SeguridadState::default())
         .manage(pty::PtyManager::default())
         .setup(|app| {
+            // En Android los secretos van a un fichero dentro del directorio
+            // privado de la aplicación; hay que fijar cuál es antes de que
+            // ningún comando lea o escriba uno.
+            config::secrets::preparar(app.handle());
+
             #[cfg(windows)]
             {
                 use tauri::Manager;

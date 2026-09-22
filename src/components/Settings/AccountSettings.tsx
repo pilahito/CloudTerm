@@ -8,7 +8,8 @@ import {
   CloudUpload,
   CloudDownload,
   Loader2,
-  ChevronDown,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { useUiStore } from "../../stores/uiStore";
@@ -40,9 +41,86 @@ function Field({
   );
 }
 
-function isPlaceholder(value: string) {
-  const v = value.trim().toLowerCase();
-  return !v || v.startsWith("1234-abc") || v.startsWith("ov23li") || v.includes("…") || v.includes("...");
+/**
+ * Editor del identificador de cliente de un proveedor.
+ *
+ * El botón «Guardar» es el que hace desaparecer la alerta roja: en cuanto hay un
+ * identificador válido —propio o integrado— el proveedor queda «listo» y la
+ * alerta deja de mostrarse.
+ */
+function CredentialEditor({
+  provider,
+  value,
+  onChange,
+  onSave,
+  saving,
+  ready,
+  builtIn,
+}: {
+  provider: AuthProvider;
+  value: string;
+  onChange: (value: string) => void;
+  onSave: () => void;
+  saving: boolean;
+  ready: boolean;
+  builtIn: boolean;
+}) {
+  const t = useT();
+  const name = providerLabel(provider);
+  const dirty = value.trim().length > 0;
+
+  return (
+    <div className="space-y-2 rounded-lg border border-dashed border-border p-2">
+      {builtIn && (
+        <p className="flex items-start gap-1.5 text-[10px] leading-relaxed text-muted">
+          <ShieldCheck size={11} className="mt-px shrink-0 text-accent" />
+          <span>
+            <span className="text-text">{t("account.builtInReady", { provider: name })}.</span>{" "}
+            {t("account.builtInReadyDetail", { provider: name })}
+          </span>
+        </p>
+      )}
+
+      <Field
+        label={t("account.clientIdLabel", { provider: name })}
+        hint={provider === "google" ? t("account.googleHint") : t("account.githubHint")}
+      >
+        <div className="flex items-center gap-1.5">
+          <input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="1234…apps.googleusercontent.com"
+            className={cx(INPUT, "font-mono")}
+          />
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving || !dirty}
+            className={cx(
+              "shrink-0 rounded-md border border-border px-2.5 py-1.5 text-[11px] text-text hover:border-accent/60",
+              (saving || !dirty) && "opacity-40",
+            )}
+          >
+            {saving ? <Loader2 size={11} className="animate-spin" /> : t("account.saveClientId")}
+          </button>
+        </div>
+      </Field>
+
+      {!ready && (
+        <p className="flex items-start gap-1.5 rounded-md border border-danger/40 bg-danger/10 px-2.5 py-2 text-[11px] leading-relaxed text-danger">
+          <AlertTriangle size={12} className="mt-px shrink-0" />
+          <span>
+            <span className="font-medium">
+              {t("account.missingClientId", { provider: name })}
+            </span>
+            <span className="block text-danger/90">{t("account.missingClientIdDetail")}</span>
+          </span>
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function AccountSettings() {
@@ -62,41 +140,83 @@ export function AccountSettings() {
   const push = useAuthStore((s) => s.push);
   const pull = useAuthStore((s) => s.pull);
 
+  const googleReady = useAuthStore((s) => s.googleReady);
+  const githubReady = useAuthStore((s) => s.githubReady);
+  const googleBuiltIn = useAuthStore((s) => s.googleBuiltIn);
+  const githubBuiltIn = useAuthStore((s) => s.githubBuiltIn);
+  const hasGithubSecret = useAuthStore((s) => s.hasGithubSecret);
+
   const [googleId, setGoogleId] = useState("");
   const [githubId, setGithubId] = useState("");
   const [githubSecret, setGithubSecret] = useState("");
-  const [advanced, setAdvanced] = useState(false);
-  const hasGithubSecret = useAuthStore((s) => s.hasGithubSecret);
+  const [savingId, setSavingId] = useState<AuthProvider | null>(null);
+  const [editing, setEditing] = useState<AuthProvider | null>(null);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  // Lo guardado manda: al llegar del backend se rellena el campo con lo que hay.
   useEffect(() => {
     setGoogleId(config.googleClientId);
     setGithubId(config.githubClientId);
   }, [config.googleClientId, config.githubClientId]);
 
-  const persistIds = async () => {
-    const g = isPlaceholder(googleId) ? config.googleClientId : googleId.trim();
-    const h = isPlaceholder(githubId) ? config.githubClientId : githubId.trim();
-    if (g !== config.googleClientId || h !== config.githubClientId || githubSecret.trim() !== "") {
-      await saveConfig({
-        googleClientId: g,
-        githubClientId: h,
+  const readyOf = (provider: AuthProvider) =>
+    provider === "google" ? googleReady : githubReady;
+  const builtInOf = (provider: AuthProvider) =>
+    provider === "google" ? googleBuiltIn : githubBuiltIn;
+  const valueOf = (provider: AuthProvider) => (provider === "google" ? googleId : githubId);
+
+  /**
+   * Guarda el identificador de un proveedor y avisa del resultado.
+   *
+   * Se guardan también los del otro proveedor para no perder lo ya escrito.
+   */
+  const saveClientId = async (provider: AuthProvider) => {
+    const own = valueOf(provider).trim();
+    if (!own) return;
+
+    setSavingId(provider);
+    try {
+      const next = {
+        googleClientId: provider === "google" ? own : googleId.trim(),
+        githubClientId: provider === "github" ? own : githubId.trim(),
+        // El secreto solo viaja cuando el usuario escribe uno nuevo.
         githubClientSecret: githubSecret.trim() || undefined,
-      });
+      };
+      const ok = await saveConfig(next);
+      if (!ok) {
+        pushToast("error", t("account.saveFailed"), t("account.saveFailedDetail"));
+        return;
+      }
       setGithubSecret("");
+      // Si el proveedor ya tiene identificador, la alerta roja desaparece aquí.
+      setEditing(null);
+      pushToast(
+        "success",
+        t("account.credentialsSaved"),
+        t("account.credentialsSavedDetail"),
+      );
+    } finally {
+      setSavingId(null);
     }
   };
 
   const onSignIn = async (provider: AuthProvider) => {
-    await persistIds();
     const result = await signIn(provider);
     if (result) {
-      pushToast("success", t("account.signedIn", { provider: providerLabel(provider) }), result.email || result.name);
+      pushToast(
+        "success",
+        t("account.signedIn", { provider: providerLabel(provider) }),
+        result.email || result.name,
+      );
     } else {
-      pushToast("error", t("account.signInFailed", { provider: providerLabel(provider) }), useAuthStore.getState().lastSync ?? undefined);
+      pushToast(
+        "error",
+        t("account.signInFailed", { provider: providerLabel(provider) }),
+        useAuthStore.getState().lastSync ?? undefined,
+      );
     }
   };
 
@@ -164,30 +284,78 @@ export function AccountSettings() {
         <div className="space-y-2 py-2">
           {(["google", "github"] as AuthProvider[]).map((provider) => {
             const waiting = busy === provider;
+            const ready = readyOf(provider);
+            const builtIn = builtInOf(provider);
+            const busyElsewhere = Boolean(busy) && !waiting;
+            const showEditor = editing === provider || !ready;
+
             return (
-              <button key={provider} type="button" disabled={Boolean(busy)} onClick={() => void onSignIn(provider)} className={cx("flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2.5 text-[12px] text-text hover:border-accent/60", busy && !waiting && "opacity-40")}>
-                {waiting ? <Loader2 size={14} className="animate-spin" /> : <ProviderIcon provider={provider} size={14} />}
-                {waiting ? t("account.waitingBrowser") : t("account.signInWith", { provider: providerLabel(provider) })}
-              </button>
+              <div key={provider} className="space-y-2">
+                <button
+                  type="button"
+                  // Solo se puede pulsar cuando hay credenciales: propias o integradas.
+                  disabled={!ready || Boolean(busy)}
+                  onClick={() => void onSignIn(provider)}
+                  className={cx(
+                    "flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-bg/40 px-3 py-2.5 text-[12px] text-text hover:border-accent/60",
+                    (!ready || busyElsewhere) && "opacity-40",
+                    !ready && "cursor-not-allowed",
+                  )}
+                >
+                  {waiting ? <Loader2 size={14} className="animate-spin" /> : <ProviderIcon provider={provider} size={14} />}
+                  {waiting
+                    ? t("account.waitingBrowser")
+                    : t("account.signInWith", { provider: providerLabel(provider) })}
+                </button>
+
+                {showEditor && (
+                  <CredentialEditor
+                    provider={provider}
+                    value={valueOf(provider)}
+                    onChange={provider === "google" ? setGoogleId : setGithubId}
+                    onSave={() => void saveClientId(provider)}
+                    saving={savingId === provider}
+                    ready={ready}
+                    builtIn={builtIn}
+                  />
+                )}
+
+                {/* El secreto solo tiene sentido si el usuario pone su propia app. */}
+                {provider === "github" && showEditor && (
+                  <Field
+                    label={t("account.githubSecretLabel")}
+                    hint={
+                      hasGithubSecret
+                        ? t("account.githubSecretStored")
+                        : t("account.githubSecretHint")
+                    }
+                  >
+                    <input
+                      type="password"
+                      value={githubSecret}
+                      onChange={(e) => setGithubSecret(e.target.value)}
+                      autoComplete="off"
+                      className={cx(INPUT, "font-mono")}
+                    />
+                  </Field>
+                )}
+
+                {/* Con credenciales integradas, deja cambiar a las propias. */}
+                {ready && builtIn && editing !== provider && (
+                  <button
+                    type="button"
+                    onClick={() => setEditing(provider)}
+                    className="text-[10px] text-muted hover:text-accent"
+                  >
+                    {t("account.clientIdOwn", { provider: providerLabel(provider) })}
+                  </button>
+                )}
+              </div>
             );
           })}
-          {busy && <p className="text-[10px] leading-relaxed text-muted">{t("account.browserOpened")}</p>}
-          <button type="button" onClick={() => setAdvanced((v) => !v)} className="flex items-center gap-1 text-[10px] text-muted hover:text-text">
-            <ChevronDown size={10} className={advanced ? "rotate-180" : ""} />
-            Avanzado
-          </button>
-          {advanced && (
-            <div className="space-y-2 rounded-lg border border-dashed border-border p-2">
-              <Field label={t("account.clientIdLabel", { provider: "Google" })}>
-                <input value={googleId} onChange={(e) => setGoogleId(e.target.value)} className={cx(INPUT, "font-mono")} />
-              </Field>
-              <Field label={t("account.clientIdLabel", { provider: "GitHub" })}>
-                <input value={githubId} onChange={(e) => setGithubId(e.target.value)} className={cx(INPUT, "font-mono")} />
-              </Field>
-              <Field label={t("account.githubSecretLabel")} hint={hasGithubSecret ? t("account.githubSecretStored") : t("account.githubSecretHint")}>
-                <input type="password" value={githubSecret} onChange={(e) => setGithubSecret(e.target.value)} autoComplete="off" className={cx(INPUT, "font-mono")} />
-              </Field>
-            </div>
+
+          {busy && (
+            <p className="text-[10px] leading-relaxed text-muted">{t("account.browserOpened")}</p>
           )}
         </div>
       )}

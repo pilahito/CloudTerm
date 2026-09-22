@@ -27,11 +27,38 @@ import { t } from "../i18n";
 
 const EMPTY_CONFIG: AuthConfig = { googleClientId: "", githubClientId: "" };
 
+/**
+ * Campos derivados de las credenciales que manda el backend.
+ *
+ * El backend decide si hay identificador utilizable (el del usuario o el que
+ * trae el binario integrado). La interfaz solo refleja esa decisión: así el
+ * botón de iniciar sesión y la alerta roja nunca se contradicen.
+ */
+function readinessOf(state: {
+  googleReady?: boolean;
+  githubReady?: boolean;
+  googleBuiltIn?: boolean;
+  githubBuiltIn?: boolean;
+}) {
+  return {
+    googleReady: Boolean(state.googleReady),
+    githubReady: Boolean(state.githubReady),
+    googleBuiltIn: Boolean(state.googleBuiltIn),
+    githubBuiltIn: Boolean(state.githubBuiltIn),
+  };
+}
+
 interface AuthStoreState {
   config: AuthConfig;
   account: Account | null;
   loaded: boolean;
   hasGithubSecret: boolean;
+  /** Si se puede iniciar sesión con cada proveedor. */
+  googleReady: boolean;
+  githubReady: boolean;
+  /** Si ese proveedor funciona gracias al identificador integrado. */
+  googleBuiltIn: boolean;
+  githubBuiltIn: boolean;
   busy: AuthProvider | null;
   syncing: boolean;
   lastSync: string | null;
@@ -55,6 +82,10 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   account: null,
   loaded: false,
   hasGithubSecret: false,
+  googleReady: false,
+  githubReady: false,
+  googleBuiltIn: false,
+  githubBuiltIn: false,
   busy: null,
   syncing: false,
   lastSync: null,
@@ -67,6 +98,7 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
         account: state.account,
         loaded: true,
         hasGithubSecret: Boolean(state.hasGithubSecret),
+        ...readinessOf(state),
       });
     } catch {
       set({ loaded: true });
@@ -80,6 +112,7 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
         config: state.config,
         account: state.account,
         hasGithubSecret: Boolean(state.hasGithubSecret),
+        ...readinessOf(state),
       });
       return true;
     } catch {

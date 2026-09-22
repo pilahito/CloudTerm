@@ -40,7 +40,9 @@ src-tauri/target/
 # ---------------------------------------------------------------------------
 # Tauri
 # ---------------------------------------------------------------------------
-src-tauri/gen/schemas/
+# Proyecto Android/iOS generado por `tauri android init`: lo recrea el flujo de
+# trabajo en cada compilación, así que no se versiona (20 MB y cambiaba solo).
+src-tauri/gen/
 src-tauri/.tauri/
 src-tauri/WixTools/
 dist-release/

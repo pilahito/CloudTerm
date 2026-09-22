@@ -9,6 +9,46 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [1.0.7] — 2026-09-22
+
+### Cuenta y sincronización
+
+- **Inicio de sesión con Google y GitHub sin configurar nada**: el binario puede
+  traer identificadores de cliente integrados, así que el usuario solo pulsa
+  «Iniciar sesión» (flujo OAuth de escritorio por *loopback* `127.0.0.1` + PKCE).
+- Si no hay identificadores integrados, la pantalla de Cuenta pide el Client ID
+  con un campo y un botón **Guardar**, y la alerta roja desaparece en cuanto se
+  guarda uno válido. Quien quiera usar su propia aplicación de Google o GitHub
+  sigue pudiendo hacerlo.
+- El botón de inicio de sesión se habilita solo cuando hay credenciales y avisa
+  mientras espera al navegador.
+- Los identificadores se pueden inyectar en el build con
+  `CLOUDTERM_GOOGLE_CLIENT_ID` y `CLOUDTERM_GITHUB_CLIENT_ID`, o pegarse en
+  `src-tauri/src/auth/clients.rs`.
+
+### Android
+
+- **Corregido el APK de publicación, que salía sin firmar**: el parche de Gradle
+  insertaba la firma en el bloque `debug` en lugar de `release`, así que
+  `apksigner verify` fallaba en cada compilación. El script ya no depende de
+  `python3` ni de coincidencias frágiles de texto.
+- **Corregido el almacén de secretos**: intentaba escribir en
+  `/data/com.pilahito.cloudterm`, un directorio del sistema donde Android no
+  deja escribir. Ahora usa el directorio privado de la aplicación.
+- El actualizador ya no intenta lanzar `pkexec` ni `xdg-open` en Android, donde
+  no existen: esas actualizaciones llegan por la tienda o reinstalando el APK.
+- `cargo check` para `aarch64-linux-android` sale sin ningún aviso.
+- El flujo de trabajo instala SDK 36 y el NDK que pide la plantilla de Tauri, y
+  la versión del CLI queda fijada.
+
+### Mantenimiento
+
+- `build-installers.yml` deriva la versión de `package.json` en lugar de
+  llevarla escrita a mano, que era lo que provocaba desajustes con los tags.
+- `src-tauri/gen/` (proyecto Android generado) pasa a `.gitignore`.
+
+---
+
 ## [1.0.5] — 2026-09-21
 
 ### SSH

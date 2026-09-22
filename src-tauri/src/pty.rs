@@ -6,7 +6,11 @@
 //! En Unix y Windows se abre un PTY de verdad (`portable-pty` / ConPTY).
 //! Sin PTY, `ssh` en el shell local dice que stdin no es un terminal.
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+// `Serialize` solo hace falta para los avisos del PTY de escritorio; en Android
+// no se emite ninguno.
+#[cfg(not(target_os = "android"))]
+use serde::Serialize;
 use tauri::{AppHandle, State};
 
 #[derive(Debug, Clone, Deserialize)]
@@ -29,6 +33,10 @@ fn default_rows() -> u32 {
     24
 }
 
+// Los dos avisos que se emiten al frontend solo los usa el PTY de escritorio:
+// en Android `imp` no los emite, así que se marcan para no dejar código muerto.
+
+#[cfg(not(target_os = "android"))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DataPayload {
@@ -36,6 +44,7 @@ struct DataPayload {
     data: Vec<u8>,
 }
 
+#[cfg(not(target_os = "android"))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct StatusPayload {

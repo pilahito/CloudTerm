@@ -40,20 +40,36 @@ fn entry(key: &str) -> Result<keyring::Entry, String> {
 mod android {
     use std::collections::BTreeMap;
     use std::path::PathBuf;
+    use std::sync::OnceLock;
+
+    /// Directorio privado de la aplicación, resuelto una sola vez.
+    ///
+    /// No se puede resolver aquí: hace falta el `AppHandle` de Tauri, que
+    /// entrega el plugin móvil. Se fija en `preparar()` desde `lib.rs`.
+    static DIRECTORIO: OnceLock<PathBuf> = OnceLock::new();
+
+    /// Deja preparado el directorio donde vivirán los secretos.
+    ///
+    /// Se llama una vez al arrancar. Si falla, los secretos no estarán
+    /// disponibles, pero la aplicación sigue funcionando.
+    pub fn preparar(app: &tauri::AppHandle) {
+        if DIRECTORIO.get().is_some() {
+            return;
+        }
+        match crate::config::app_data_dir(app) {
+            Ok(dir) => {
+                let _ = DIRECTORIO.set(dir);
+            }
+            Err(err) => eprintln!("no se pudo preparar el almacén de secretos: {err}"),
+        }
+    }
 
     /// Fichero donde se guardan los secretos.
     fn ruta() -> Result<PathBuf, String> {
-        // Android no define `HOME`; el directorio privado de la aplicación sí
-        // llega por entorno cuando Tauri la arranca.
-        let base = std::env::var("XDG_DATA_HOME")
-            .or_else(|_| std::env::var("HOME"))
-            .or_else(|_| std::env::var("ANDROID_DATA"))
-            .map_err(|_| "no se pudo resolver el directorio de datos".to_string())?;
-
-        let dir = PathBuf::from(base).join("com.pilahito.cloudterm");
-        std::fs::create_dir_all(&dir)
-            .map_err(|err| format!("no se pudo crear {}: {err}", dir.display()))?;
-        Ok(dir.join("secretos.json"))
+        DIRECTORIO
+            .get()
+            .map(|dir| dir.join("secretos.json"))
+            .ok_or_else(|| "el almacén de secretos no se ha preparado".to_string())
     }
 
     fn leer() -> BTreeMap<String, String> {
@@ -102,6 +118,19 @@ mod android {
 /* -------------------------------------------------------------------------- */
 /* Núcleo reutilizable (sin Tauri)                                            */
 /* -------------------------------------------------------------------------- */
+
+/// Prepara el almacén de secretos en las plataformas que lo necesitan.
+///
+/// En escritorio y macOS el llavero está siempre disponible y esto no hace
+/// nada; en Android fija el directorio privado de la aplicación antes de que
+/// ningún comando intente leer o escribir un secreto.
+pub fn preparar(app: &tauri::AppHandle) {
+    #[cfg(target_os = "android")]
+    android::preparar(app);
+
+    #[cfg(not(target_os = "android"))]
+    let _ = app;
+}
 
 /// Guarda (o sobrescribe) un secreto.
 #[cfg(not(target_os = "android"))]

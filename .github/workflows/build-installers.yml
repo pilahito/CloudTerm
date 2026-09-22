@@ -80,6 +80,13 @@ jobs:
       - name: Dependencias del frontend
         run: npm ci
 
+      - name: Determinar la versión
+        id: version
+        shell: bash
+        # Comillas simples dentro de `node -p` para que bash no tenga que
+        # adivinar: el valor sale sin comillas y `GITHUB_OUTPUT` lo acepta.
+        run: echo "valor=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
       - name: Comprobar tipos
         run: npx tsc --noEmit
 
@@ -88,10 +95,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v1.0.6
-          releaseName: CloudTerm 1.0.6
+          tagName: v${{ steps.version.outputs.valor }}
+          releaseName: CloudTerm ${{ steps.version.outputs.valor }}
           releaseBody: |
-            ## CloudTerm 1.0.6
+            ## CloudTerm ${{ steps.version.outputs.valor }}
 
             Actualizar **desde la app**: Ayuda → Buscar actualizaciones descarga
             el instalador de esta plataforma y lo abre.

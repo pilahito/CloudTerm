@@ -1,64 +1,108 @@
 #!/usr/bin/env bash
-# Añade firma con keystore.properties al Gradle que genera `tauri android init`.
+# CloudTerm · github.com/pilahito/cloudterm
+# © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
+#
+# Añade la firma con `keystore.properties` al Gradle que genera
+# `tauri android init`, para que el APK/AAB de publicación salga firmado.
+#
+# Hay que ejecutarlo SIEMPRE después de `tauri android init` y antes de
+# `tauri android build`, porque `init` regenera `app/build.gradle.kts`.
+#
+# Este script es idempotente: si ya está aplicado, no duplica nada.
+#
+# ── Por qué no se usa `sed`/`python3` ────────────────────────────────────────
+# La versión anterior insertaba la firma justo después de la primera línea
+# `isMinifyEnabled = false`, que en la plantilla actual de Tauri pertenece al
+# bloque *debug*. El resultado era:
+#
+#   * el APK de depuración se firmaba con la clave de publicación, y
+#   * el APK/AAB de publicación quedaba SIN FIRMAR (y `apksigner verify` del
+#     flujo de trabajo fallaba).
+#
+# Ahora se localiza el bloque `getByName("release")` contando llaves, que es
+# independiente del formato y del orden de las líneas.
 set -euo pipefail
+
 FILE="src-tauri/gen/android/app/build.gradle.kts"
-test -f "$FILE"
 
-if ! grep -q "import java.util.Properties" "$FILE"; then
-  sed -i '1i import java.util.Properties\nimport java.io.FileInputStream' "$FILE"
+if [ ! -f "$FILE" ]; then
+  echo "  error: no existe $FILE; ejecuta antes 'tauri android init'" >&2
+  exit 1
 fi
 
-if ! grep -q "keystorePropertiesFile" "$FILE"; then
-  python3 - <<'PY'
-from pathlib import Path
-p = Path("src-tauri/gen/android/app/build.gradle.kts")
-text = p.read_text(encoding="utf-8")
-block = '''
+# ── 1. Import de FileInputStream (Properties ya lo trae la plantilla) ────────
+if ! grep -q '^import java.io.FileInputStream' "$FILE"; then
+  printf 'import java.io.FileInputStream\n%s' "$(cat "$FILE")" > "$FILE.tmp"
+  mv "$FILE.tmp" "$FILE"
+  echo "  · añadido el import de FileInputStream"
+fi
+
+# ── 2. Lectura de keystore.properties a nivel de proyecto ────────────────────
+if ! grep -q 'keystorePropertiesFile' "$FILE"; then
+  BLOCK=$(cat <<'KTS'
+
+// CloudTerm: credenciales de firma. El fichero lo escribe el flujo de trabajo
+// (o lo pones tú) en la raíz del proyecto Android y está fuera del control de
+// versiones. Si no existe, las compilaciones de depuración siguen funcionando.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = Properties()
+val keystoreProperties = java.util.Properties()
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
 }
-
-'''
-needle = "android {"
-if needle in text:
-    text = text.replace(needle, block + needle, 1)
-    p.write_text(text, encoding="utf-8")
-PY
+KTS
+)
+  awk -v block="$BLOCK" '
+    !done && /^android \{/ { print block; done=1 }
+    { print }
+  ' "$FILE" > "$FILE.tmp"
+  mv "$FILE.tmp" "$FILE"
+  echo "  · añadida la lectura de keystore.properties"
 fi
 
-if ! grep -q "signingConfigs" "$FILE"; then
-  python3 - <<'PY'
-from pathlib import Path
-p = Path("src-tauri/gen/android/app/build.gradle.kts")
-text = p.read_text(encoding="utf-8")
-block = '''
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
+# ── 3. signingConfigs dentro de android { } ─────────────────────────────────
+if ! grep -q 'signingConfigs' "$FILE"; then
+  BLOCK=$(cat <<'KTS'
+
+    // CloudTerm: configuración de firma de publicación. Solo se registra si
+    // hay keystore, para no romper `assembleDebug` en un clon recién bajado.
+    if (keystorePropertiesFile.exists()) {
+        signingConfigs {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storePassword = keystoreProperties.getProperty("storePassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+            }
         }
     }
-'''
-needle = "    buildTypes {"
-if needle in text:
-    text = text.replace(needle, block + needle, 1)
-    p.write_text(text, encoding="utf-8")
-PY
+KTS
+)
+  awk -v block="$BLOCK" '
+    !done && /^android \{/ { print; print block; done=1; next }
+    { print }
+  ' "$FILE" > "$FILE.tmp"
+  mv "$FILE.tmp" "$FILE"
+  echo "  · añadido el bloque signingConfigs"
 fi
 
+# ── 4. La firma va al bloque RELEASE, no al debug ───────────────────────────
+# Se busca `getByName("release") {` y se inserta como primera línea de su
+# cuerpo, contando llaves para no depender del contenido del bloque.
 if ! grep -q 'signingConfig = signingConfigs.getByName("release")' "$FILE"; then
-  python3 - <<'PY'
-from pathlib import Path
-p = Path("src-tauri/gen/android/app/build.gradle.kts")
-text = p.read_text(encoding="utf-8")
-needle = "            isMinifyEnabled = false"
-insert = needle + '\n            signingConfig = signingConfigs.getByName("release")'
-if needle in text and "signingConfigs.getByName" not in text:
-    text = text.replace(needle, insert, 1)
-    p.write_text(text, encoding="utf-8")
-PY
+  awk '
+    {
+      print
+      if (!done && $0 ~ /getByName\("release"\)[[:space:]]*\{/) {
+        print "            // CloudTerm: firma de publicación."
+        print "            if (keystorePropertiesFile.exists()) {"
+        print "                signingConfig = signingConfigs.getByName(\"release\")"
+        print "            }"
+        done = 1
+      }
+    }
+  ' "$FILE" > "$FILE.tmp"
+  mv "$FILE.tmp" "$FILE"
+  echo "  · aplicada la firma al bloque release"
 fi
+
+echo "  ✓ Gradle preparado para firmar la publicación"

@@ -106,6 +106,11 @@ fn extension(ruta: &std::path::Path) -> String {
 fn aplicar_paquete(ruta: &std::path::Path) -> Result<(), String> {
     let ext = extension(ruta);
 
+    // En Android no se usa la extensión: no hay paquetes que aplicar. En el
+    // resto de plataformas sí, y cada rama la consume.
+    #[cfg(target_os = "android")]
+    let _ = &ext;
+
     #[cfg(windows)]
     {
         let _ = ext;
@@ -126,7 +131,11 @@ fn aplicar_paquete(ruta: &std::path::Path) -> Result<(), String> {
         return Ok(());
     }
 
-    #[cfg(all(unix, not(target_os = "macos")))]
+    // Android es unix, pero no tiene ni `pkexec`, ni `xdg-open`, ni paquetes
+    // `.deb`/AppImage: las actualizaciones llegan por la tienda o reinstalando
+    // el APK. Sin esta exclusión, la rama de abajo intentaría lanzarlos y el
+    // usuario vería un «os error 2» sin explicación.
+    #[cfg(all(unix, not(target_os = "macos"), not(target_os = "android")))]
     {
         use std::os::unix::fs::PermissionsExt;
         if ext == "appimage" {

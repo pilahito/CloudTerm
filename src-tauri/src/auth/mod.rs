@@ -13,6 +13,7 @@
 //! disco. En el fichero de configuración solo van cosas que no son secretas: el
 //! identificador de cliente y los datos públicos de la cuenta.
 
+pub mod clients;
 pub mod github;
 pub mod google;
 pub mod destinos;
@@ -82,6 +83,34 @@ impl AuthConfig {
         match provider {
             AuthProvider::Google => self.google_client_id.trim(),
             AuthProvider::GitHub => self.github_client_id.trim(),
+        }
+    }
+
+    /// `true` si el usuario ha guardado su propio identificador para este
+    /// proveedor. Un valor de relleno del formulario no cuenta como guardado.
+    fn has_own_client_id(&self, provider: AuthProvider) -> bool {
+        !self.client_id(provider).is_empty()
+    }
+
+    /// Identificador de fábrica que trae el binario, si lo trae.
+    ///
+    /// Se prefiere el del usuario: quien quiera usar su propia aplicación de
+    /// Google o GitHub puede seguir haciéndolo, y los identificadores de fábrica
+    /// solo rellenan el hueco cuando no hay ninguno guardado.
+    fn built_in_client_id(provider: AuthProvider) -> &'static str {
+        match provider {
+            AuthProvider::Google => clients::google_client_id().trim(),
+            AuthProvider::GitHub => clients::github_client_id().trim(),
+        }
+    }
+
+    /// Identificador que se usará de verdad, venga del usuario o de fábrica.
+    fn resolved_client_id(&self, provider: AuthProvider) -> &str {
+        let own = self.client_id(provider);
+        if !own.is_empty() {
+            own
+        } else {
+            Self::built_in_client_id(provider)
         }
     }
 
@@ -159,6 +188,15 @@ pub struct AuthState {
     pub config: AuthConfig,
     pub account: Option<Account>,
     pub has_github_secret: bool,
+    /// Si se puede iniciar sesión con Google (identificador propio o de fábrica).
+    /// La interfaz habilita el botón solo cuando esto es `true`.
+    pub google_ready: bool,
+    /// Lo mismo para GitHub.
+    pub github_ready: bool,
+    /// Si el identificador que se usará lo trae el binario de fábrica, para
+    /// poder decirlo en la interfaz en vez de pedirle nada al usuario.
+    pub google_built_in: bool,
+    pub github_built_in: bool,
 }
 
 const GITHUB_OAUTH_SECRET: &str = "auth:github:client_secret";
@@ -180,10 +218,20 @@ fn save_github_oauth_secret(value: &str) -> Result<(), String> {
 }
 
 fn to_state(stored: &StoredAuth) -> AuthState {
+    let config = &stored.config;
+    let built_in = |provider| {
+        !config.has_own_client_id(provider)
+            && !AuthConfig::built_in_client_id(provider).is_empty()
+    };
+
     AuthState {
         config: stored.config.clone(),
         account: stored.account.clone(),
         has_github_secret: github_oauth_secret().is_some(),
+        google_ready: !config.resolved_client_id(AuthProvider::Google).is_empty(),
+        github_ready: !config.resolved_client_id(AuthProvider::GitHub).is_empty(),
+        google_built_in: built_in(AuthProvider::Google),
+        github_built_in: built_in(AuthProvider::GitHub),
     }
 }
 
@@ -392,7 +440,11 @@ pub async fn auth_sign_in_google(
     let _guard = manager.signing_in.lock().await;
 
     let mut stored = read_stored(&app);
-    let client_id = stored.config.client_id(AuthProvider::Google).to_string();
+    // Se prefiere el identificador del usuario; si no hay, el de fábrica.
+    let client_id = stored
+        .config
+        .resolved_client_id(AuthProvider::Google)
+        .to_string();
     if client_id.is_empty() {
         return Err(
             "falta el identificador de cliente de Google; créalo en Google Cloud y pégalo aquí"
@@ -441,7 +493,11 @@ pub async fn auth_sign_in_github(
     let _guard = manager.signing_in.lock().await;
 
     let mut stored = read_stored(&app);
-    let client_id = stored.config.client_id(AuthProvider::GitHub).to_string();
+    // Igual que en Google: primero lo del usuario, si no lo de fábrica.
+    let client_id = stored
+        .config
+        .resolved_client_id(AuthProvider::GitHub)
+        .to_string();
     if client_id.is_empty() {
         return Err(
             "falta el identificador de cliente de GitHub; créalo en GitHub → Developer settings y pégalo aquí"
@@ -759,5 +815,62 @@ mod tests {
         config.set_client_id(AuthProvider::Google, "  mi-id  ".to_string());
         assert_eq!(config.client_id(AuthProvider::Google), "mi-id");
         assert_eq!(config.client_id(AuthProvider::GitHub), "");
+    }
+
+    /// El identificador del usuario manda sobre el de fábrica.
+    #[test]
+    fn the_user_identifier_wins_over_the_built_in_one() {
+        let mut config = AuthConfig::default();
+        config.set_client_id(AuthProvider::Google, "el-mio".to_string());
+        assert_eq!(config.resolved_client_id(AuthProvider::Google), "el-mio");
+        assert!(config.has_own_client_id(AuthProvider::Google));
+    }
+
+    /// Sin identificador propio se recurre al de fábrica, que puede estar vacío
+    /// si el binario no se compiló con ninguno.
+    #[test]
+    fn without_an_own_identifier_the_built_in_is_used() {
+        let config = AuthConfig::default();
+        assert!(!config.has_own_client_id(AuthProvider::Google));
+        assert_eq!(
+            config.resolved_client_id(AuthProvider::Google),
+            AuthConfig::built_in_client_id(AuthProvider::Google)
+        );
+        assert_eq!(
+            config.resolved_client_id(AuthProvider::GitHub),
+            AuthConfig::built_in_client_id(AuthProvider::GitHub)
+        );
+    }
+
+    /// Un identificador de relleno (solo espacios) no cuenta como propio: si no,
+    /// la interfaz creería que ya hay credenciales y el botón fallaría después.
+    #[test]
+    fn a_blank_identifier_does_not_count_as_saved() {
+        let mut config = AuthConfig::default();
+        config.set_client_id(AuthProvider::GitHub, "   ".to_string());
+        assert!(!config.has_own_client_id(AuthProvider::GitHub));
+    }
+
+    /// El estado marca cada proveedor como listo según el identificador que se
+    /// vaya a usar de verdad, que es lo que habilita el botón en la interfaz.
+    #[test]
+    fn the_state_reports_readiness_from_the_resolved_identifier() {
+        let stored = StoredAuth::default();
+        let state = to_state(&stored);
+
+        let google_expected =
+            !AuthConfig::built_in_client_id(AuthProvider::Google).is_empty();
+        assert_eq!(state.google_ready, google_expected);
+        assert_eq!(state.github_ready, !AuthConfig::built_in_client_id(AuthProvider::GitHub).is_empty());
+
+        // Con un identificador propio, ese proveedor queda listo sin depender de
+        // lo que traiga el binario.
+        let mut con_propio = StoredAuth::default();
+        con_propio
+            .config
+            .set_client_id(AuthProvider::Google, "propio".to_string());
+        let state = to_state(&con_propio);
+        assert!(state.google_ready);
+        assert!(!state.google_built_in);
     }
 }

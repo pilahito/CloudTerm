@@ -32,6 +32,12 @@ export interface AuthState {
   config: AuthConfig;
   account: Account | null;
   hasGithubSecret?: boolean;
+  /** Hay credenciales utilizables para este proveedor (propias o integradas). */
+  googleReady?: boolean;
+  githubReady?: boolean;
+  /** El identificador utilizable lo trae el binario de fábrica. */
+  googleBuiltIn?: boolean;
+  githubBuiltIn?: boolean;
 }
 
 export interface SyncOutcome {

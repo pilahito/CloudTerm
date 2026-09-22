@@ -52,15 +52,46 @@ impl Default for AppConfig {
     }
 }
 
-/// Ruta del fichero de configuración, creando el directorio si hace falta.
-pub fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app
+/// Identificador de la aplicación, tal y como aparece en `tauri.conf.json`.
+pub const IDENTIFICADOR: &str = "com.pilahito.cloudterm";
+
+/// Directorio privado de datos de la aplicación, creándolo si hace falta.
+///
+/// Es el **único** sitio del programa que resuelve esta ruta: así los ajustes,
+/// el fichero de secretos de Android y la base de datos no pueden acabar en
+/// sitios distintos.
+///
+/// ## Por qué no vale `app_config_dir()` a secas en Android
+///
+/// En escritorio, `app_config_dir()` ya añade el identificador
+/// (`~/.config/com.pilahito.cloudterm`). En Android, Tauri resuelve la ruta
+/// llamando al plugin `PathPlugin`, que devuelve `activity.dataDir` **sin** el
+/// identificador (`/data/user/0/com.pilahito.cloudterm`, que ya es privado de
+/// la aplicación). Por eso se añade el identificador solo cuando falta.
+///
+/// Esto es lo que evita el fallo anterior: resolver la ruta leyendo variables
+/// de entorno (`ANDROID_DATA`) daba `/data/com.pilahito.cloudterm`, un
+/// directorio del sistema donde la aplicación **no puede escribir**.
+pub fn app_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let base = app
         .path()
         .app_config_dir()
         .map_err(|err| format!("no se pudo resolver el directorio de configuración: {err}"))?;
+
+    let dir = if base.ends_with(IDENTIFICADOR) {
+        base
+    } else {
+        base.join(IDENTIFICADOR)
+    };
+
     std::fs::create_dir_all(&dir)
         .map_err(|err| format!("no se pudo crear {}: {err}", dir.display()))?;
-    Ok(dir.join("cloudterm.json"))
+    Ok(dir)
+}
+
+/// Ruta del fichero de configuración, creando el directorio si hace falta.
+pub fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
+    Ok(app_data_dir(app)?.join("cloudterm.json"))
 }
 
 #[tauri::command]
