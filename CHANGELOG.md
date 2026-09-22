@@ -9,6 +9,24 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
+## [1.0.8] — 2026-09-22
+
+### Android
+
+- **Arreglada la compilación del APK**, que fallaba al aplicar el parche de
+  firma con `Unresolved reference: util` / `Unresolved reference: io`. En el DSL
+  de Kotlin, `java.util.Properties` no resuelve: dentro de un script de Gradle
+  `java` es la extensión `java` del proyecto, no el paquete. Ahora las clases se
+  importan y se usan por su nombre simple.
+- El parche se ha comprobado contra la plantilla real que genera
+  `tauri android init`: imports únicos, firma solo en `release`, llaves
+  equilibradas e idempotencia.
+
+> La 1.0.7 publicó los instaladores de escritorio correctamente, pero su APK no
+> llegó a compilarse por este fallo.
+
+---
+
 ## [1.0.7] — 2026-09-22
 
 ### Cuenta y sincronización

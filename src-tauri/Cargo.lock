@@ -711,7 +711,7 @@ dependencies = [
 
 [[package]]
 name = "cloudterm"
-version = "1.0.7"
+version = "1.0.8"
 dependencies = [
  "argon2",
  "base64 0.21.7",

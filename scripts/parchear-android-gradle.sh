@@ -30,12 +30,23 @@ if [ ! -f "$FILE" ]; then
   exit 1
 fi
 
-# ── 1. Import de FileInputStream (Properties ya lo trae la plantilla) ────────
-if ! grep -q '^import java.io.FileInputStream' "$FILE"; then
-  printf 'import java.io.FileInputStream\n%s' "$(cat "$FILE")" > "$FILE.tmp"
-  mv "$FILE.tmp" "$FILE"
-  echo "  · añadido el import de FileInputStream"
-fi
+# ── 1. Imports de Properties y FileInputStream ───────────────────────────────
+#
+# En el DSL de Kotlin, escribir `java.util.Properties` NO funciona: dentro de un
+# script de Gradle `java` resuelve a la extensión `java` del proyecto, no al
+# paquete, y la compilación falla con:
+#
+#     Unresolved reference: util
+#     Unresolved reference: io
+#
+# Por eso se importan las clases y se usan por su nombre simple.
+for clase in "java.util.Properties" "java.io.FileInputStream"; do
+  if ! grep -q "^import $clase\$" "$FILE"; then
+    printf 'import %s\n%s' "$clase" "$(cat "$FILE")" > "$FILE.tmp"
+    mv "$FILE.tmp" "$FILE"
+    echo "  · añadido el import de $clase"
+  fi
+done
 
 # ── 2. Lectura de keystore.properties a nivel de proyecto ────────────────────
 if ! grep -q 'keystorePropertiesFile' "$FILE"; then
@@ -45,9 +56,9 @@ if ! grep -q 'keystorePropertiesFile' "$FILE"; then
 // (o lo pones tú) en la raíz del proyecto Android y está fuera del control de
 // versiones. Si no existe, las compilaciones de depuración siguen funcionando.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = java.util.Properties()
+val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 KTS
 )
