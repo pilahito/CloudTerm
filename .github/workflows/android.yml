@@ -97,6 +97,13 @@ jobs:
 
       - name: Compilar el APK firmado
         run: npx tauri android build --apk
+        env:
+          # Identificadores integrados de fábrica: viajan dentro del APK, así
+          # que quien lo instala solo pulsa «Iniciar sesión» y no crea nada en
+          # Google Cloud. Se configuran UNA vez en los secretos del repositorio.
+          # La credencial de Android es distinta de la de escritorio.
+          CLOUDTERM_GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.CLOUDTERM_GOOGLE_ANDROID_CLIENT_ID }}
+          CLOUDTERM_GITHUB_CLIENT_ID: ${{ secrets.CLOUDTERM_GITHUB_CLIENT_ID }}
 
       - name: Comprobar que está firmado
         shell: bash

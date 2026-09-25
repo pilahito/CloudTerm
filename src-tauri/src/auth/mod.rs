@@ -249,6 +249,34 @@ pub struct AuthManager {
     /// Solo puede haber un inicio de sesión en curso: dos a la vez compartirían
     /// el puerto de retorno y el usuario vería dos pestañas.
     signing_in: Arc<tokio::sync::Mutex<()>>,
+    /// En Android el navegador vuelve por un esquema propio (`cloudterm://`), no
+    /// por un puerto local. Aquí se guarda el emisor pendiente mientras la
+    /// aplicación espera la redirección.
+    #[cfg(target_os = "android")]
+    callback_tx: std::sync::Mutex<Option<tokio::sync::oneshot::Sender<String>>>,
+}
+
+#[cfg(target_os = "android")]
+impl AuthManager {
+    /// Deja preparado el canal que recibirá la URL de vuelta del navegador.
+    ///
+    /// Solo puede haber una espera activa: el `signing_in` de arriba ya
+    /// serializa los inicios de sesión, así que no se pisan entre sí.
+    fn arm_deep_link(&self) -> tokio::sync::oneshot::Receiver<String> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        *self.callback_tx.lock().expect("callback lock") = Some(tx);
+        rx
+    }
+
+    /// Entrega una URL de deep link a la espera activa, si la hay.
+    ///
+    /// Si llega un deep link sin que haya un inicio de sesión en curso (la app
+    /// se abrió por otra vía), simplemente se descarta.
+    pub fn deliver_deep_link(&self, raw: String) {
+        if let Some(tx) = self.callback_tx.lock().expect("callback lock").take() {
+            let _ = tx.send(raw);
+        }
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -431,6 +459,59 @@ pub fn auth_config_set(app: AppHandle, config: AuthConfig) -> Result<AuthState, 
     Ok(to_state(&stored))
 }
 
+/// Abre el navegador y espera el código de autorización de Google.
+///
+/// Devuelve `(redirect_uri, code)`. En escritorio se escucha en un puerto
+/// libre de `127.0.0.1`; en Android Google vuelve por el esquema propio
+/// `cloudterm://callback` que entrega el plugin `deep-link`.
+async fn google_authorization_code(
+    app: &AppHandle,
+    manager: &AuthManager,
+    client_id: &str,
+    expected_state: &str,
+    challenge: &str,
+) -> Result<(String, String), String> {
+    // En escritorio el gestor no hace falta (se usa el puerto local); el
+    // parámetro solo se lee en Android.
+    #[cfg(not(target_os = "android"))]
+    let _ = manager;
+    #[cfg(not(target_os = "android"))]
+    {
+        let (port, waiter) = google::listen(expected_state.to_string()).await?;
+        let redirect_uri = format!("http://127.0.0.1:{port}/callback");
+        let url = google::authorize_url(client_id, &redirect_uri, expected_state, challenge);
+
+        app.opener()
+            .open_url(url, None::<&str>)
+            .map_err(|err| format!("no se pudo abrir el navegador: {err}"))?;
+
+        let code = waiter
+            .await
+            .map_err(|err| format!("la espera del navegador se interrumpió: {err}"))??;
+        Ok((redirect_uri, code))
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        const CALLBACK_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(300);
+
+        let redirect_uri = google::ANDROID_REDIRECT_URI.to_string();
+        let url = google::authorize_url(client_id, &redirect_uri, expected_state, challenge);
+
+        app.opener()
+            .open_url(url, None::<&str>)
+            .map_err(|err| format!("no se pudo abrir el navegador: {err}"))?;
+
+        let receiver = manager.arm_deep_link();
+        let raw = tokio::time::timeout(CALLBACK_TIMEOUT, receiver)
+            .await
+            .map_err(|_| "se agotó el tiempo esperando al navegador".to_string())?
+            .map_err(|_| "la espera del navegador se interrumpió".to_string())?;
+        let code = google::parse_redirect_uri(&raw, expected_state)?;
+        Ok((redirect_uri, code))
+    }
+}
+
 /// Inicia sesión con Google: abre el navegador y espera la vuelta.
 #[tauri::command]
 pub async fn auth_sign_in_google(
@@ -460,17 +541,8 @@ pub async fn auth_sign_in_google(
     let challenge = pkce::challenge(&verifier);
     let expected_state = pkce::state();
 
-    let (port, waiter) = google::listen(expected_state.clone()).await?;
-    let redirect_uri = format!("http://127.0.0.1:{port}/callback");
-    let url = google::authorize_url(&client_id, &redirect_uri, &expected_state, &challenge);
-
-    app.opener()
-        .open_url(url, None::<&str>)
-        .map_err(|err| format!("no se pudo abrir el navegador: {err}"))?;
-
-    let code = waiter
-        .await
-        .map_err(|err| format!("la espera del navegador se interrumpió: {err}"))??;
+    let (redirect_uri, code) =
+        google_authorization_code(&app, &manager, &client_id, &expected_state, &challenge).await?;
 
     let tokens =
         google::exchange_code(&client, &client_id, &code, &verifier, &redirect_uri).await?;

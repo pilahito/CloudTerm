@@ -7,6 +7,30 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cuenta
+
+- **Los instaladores publicados ya traen los identificadores de cliente dentro**:
+  los flujos de GitHub Actions los toman de los secretos del repositorio
+  (`CLOUDTERM_GOOGLE_CLIENT_ID`, `CLOUDTERM_GOOGLE_ANDROID_CLIENT_ID` y
+  `CLOUDTERM_GITHUB_CLIENT_ID`) y se incrustan al compilar. Antes solo existía el
+  mecanismo en el código, así que el binario salía sin identificador y cada
+  usuario tenía que crearse el suyo: ahora se configura **una vez** al publicar y
+  quien instala CloudTerm solo pulsa «Iniciar sesión».
+- `build.rs` declara esas variables para que un cambio en el secreto recompile el
+  binario en lugar de reutilizar una caché con el valor anterior.
+
+### Android
+
+- **Inicio de sesión con Google por esquema propio**: en el móvil Google no
+  admite la redirección *loopback* `127.0.0.1` del escritorio, así que ahora el
+  flujo usa `cloudterm://callback` con el plugin `deep-link` de Tauri. El
+  navegador vuelve solo a la app y el código se canjea igual que en escritorio
+  (PKCE + llavero). El esquema se declara en `tauri.conf.json` y el backend lo
+  espera en `google.rs` (`ANDROID_REDIRECT_URI`).
+- Para publicar la app, el autor registra en Google Cloud una credencial de tipo
+  **Aplicación Android** con el paquete `com.pilahito.cloudterm`, la huella
+  SHA-1 del APK y la URI `cloudterm://callback`.
+
 ---
 
 ## [1.0.8] — 2026-09-22

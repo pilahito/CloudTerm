@@ -111,7 +111,8 @@ falta no es empaquetado, es producto:
 | Interfaz | Se renderiza, pero está pensada para ratón y ventana grande |
 | Terminal | 🔴 **Sin implementar.** El backend abre un PTY con `russh`, que en Android no existe como en escritorio |
 | SFTP | Debería funcionar (es red pura), sin probar |
-| Llavero | `keyring` en Android no tiene backend; habría que usar el Keystore |
+| Inicio de sesión (Google) | 🟢 **Implementado.** Usa el esquema propio `cloudterm://callback` con el plugin `deep-link` (en móvil no vale el *loopback* de escritorio) |
+| Llavero | `keyring` en Android no tiene backend; los secretos van a un fichero `0600` (pendiente migrar al Keystore) |
 | Barra de título | No tiene sentido: en Android manda el sistema |
 | Barra de estado | Habría que integrarla con la del sistema |
 

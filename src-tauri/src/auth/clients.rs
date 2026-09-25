@@ -14,9 +14,17 @@
 //! Es decir, integrarlos **no quita** que un usuario avanzado use los suyos.
 //!
 //! 1. **En el build** (recomendado para el binario oficial): define las
-//!    variables de entorno `CLOUDTERM_GOOGLE_CLIENT_ID` y
-//!    `CLOUDTERM_GITHUB_CLIENT_ID` antes de compilar. Así el identificador no
-//!    queda escrito en el repositorio.
+//!    variables de entorno antes de compilar. Así el identificador no queda
+//!    escrito en el repositorio:
+//!    - `CLOUDTERM_GOOGLE_CLIENT_ID` → Google en escritorio
+//!    - `CLOUDTERM_GOOGLE_ANDROID_CLIENT_ID` → Google en Android (credencial
+//!      distinta: Google separa los tipos de cliente y la de Android va atada
+//!      al paquete y a la huella SHA-1 de la firma del APK)
+//!    - `CLOUDTERM_GITHUB_CLIENT_ID` → GitHub
+//!
+//!    Los flujos de `.github/workflows/` ya las toman de los secretos del
+//!    repositorio, así que **quien instala CloudTerm no configura nada**: los
+//!    identificadores viajan dentro del binario publicado.
 //! 2. **En el código**: pega el valor entre las comillas del `const` de abajo.
 //!
 //! ```text
@@ -40,6 +48,15 @@
 /// Formato: `1234567890-xxxxxxxx.apps.googleusercontent.com`
 pub const GOOGLE_CLIENT_ID: &str = "";
 
+/// Client ID de Google para Android. Público; no es un secreto.
+///
+/// Es una credencial **distinta** de la de escritorio: Google separa los tipos
+/// de cliente («Aplicación de escritorio» y «Aplicación Android»), y la de
+/// Android va atada al nombre del paquete (`com.pilahito.cloudterm`) y a la
+/// huella SHA-1 de la firma del APK. Como el APK oficial se firma siempre con
+/// la misma clave, este identificador vale para todos los usuarios.
+pub const GOOGLE_ANDROID_CLIENT_ID: &str = "";
+
 /// Client ID de GitHub OAuth App. Público; no es un secreto.
 ///
 /// Formato: `Ov23liXXXXXXXXXXXXXX`
@@ -48,11 +65,23 @@ pub const GITHUB_CLIENT_ID: &str = "";
 /// Identificador de Google integrado en el build, si lo hay.
 ///
 /// Se lee en tiempo de compilación: si la variable de entorno no está definida
-/// cuando se compila, queda vacío y se usa el `const` de arriba.
+/// cuando se compila, queda vacío y se usa el `const` de arriba. En Android se
+/// usa una variable distinta porque la credencial también lo es.
 pub fn google_client_id() -> &'static str {
-    match option_env!("CLOUDTERM_GOOGLE_CLIENT_ID") {
-        Some(value) if !value.trim().is_empty() => value,
-        _ => GOOGLE_CLIENT_ID,
+    #[cfg(target_os = "android")]
+    {
+        match option_env!("CLOUDTERM_GOOGLE_ANDROID_CLIENT_ID") {
+            Some(value) if !value.trim().is_empty() => value,
+            _ => GOOGLE_ANDROID_CLIENT_ID,
+        }
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        match option_env!("CLOUDTERM_GOOGLE_CLIENT_ID") {
+            Some(value) if !value.trim().is_empty() => value,
+            _ => GOOGLE_CLIENT_ID,
+        }
     }
 }
 
@@ -74,6 +103,7 @@ mod tests {
     #[test]
     fn built_in_ids_are_trimmed() {
         assert_eq!(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_ID.trim());
+        assert_eq!(GOOGLE_ANDROID_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID.trim());
         assert_eq!(GITHUB_CLIENT_ID, GITHUB_CLIENT_ID.trim());
     }
 

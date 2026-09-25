@@ -94,6 +94,12 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Identificadores integrados de fábrica: se incrustan en el binario
+          # para que quien instale CloudTerm solo pulse «Iniciar sesión» y no
+          # tenga que crear nada en Google Cloud. Se configuran UNA vez en
+          # Settings → Secrets and variables → Actions del repositorio.
+          CLOUDTERM_GOOGLE_CLIENT_ID: ${{ secrets.CLOUDTERM_GOOGLE_CLIENT_ID }}
+          CLOUDTERM_GITHUB_CLIENT_ID: ${{ secrets.CLOUDTERM_GITHUB_CLIENT_ID }}
         with:
           tagName: v${{ steps.version.outputs.valor }}
           releaseName: CloudTerm ${{ steps.version.outputs.valor }}

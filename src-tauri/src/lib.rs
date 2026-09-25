@@ -43,6 +43,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_deep_link::init())
         .manage(db::DbState::default())
         .manage(ssh::SshManager::default())
         .manage(ssh::HostKeyPrompts::default())
@@ -57,6 +58,25 @@ pub fn run() {
             // privado de la aplicación; hay que fijar cuál es antes de que
             // ningún comando lea o escriba uno.
             config::secrets::preparar(app.handle());
+
+            #[cfg(target_os = "android")]
+            {
+                use tauri::Manager;
+                use tauri_plugin_deep_link::DeepLinkExt;
+
+                // El navegador devuelve el código OAuth por el esquema propio
+                // `cloudterm://callback`. Aquí se reenvía cada URL al gestor de
+                // autenticación, que tiene la espera activa si hay un inicio de
+                // sesión en curso.
+                let handle = app.handle().clone();
+                app.deep_link().on_open_url(move |event| {
+                    for url in event.urls() {
+                        handle
+                            .state::<auth::AuthManager>()
+                            .deliver_deep_link(url.to_string());
+                    }
+                });
+            }
 
             #[cfg(windows)]
             {

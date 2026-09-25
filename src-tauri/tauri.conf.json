@@ -34,6 +34,16 @@
     },
     "withGlobalTauri": false
   },
+  "plugins": {
+    "deep-link": {
+      "mobile": [
+        {
+          "scheme": ["cloudterm"],
+          "host": "callback"
+        }
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

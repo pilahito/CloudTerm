@@ -3,9 +3,13 @@
 CloudTerm puede iniciar sesión con **Google** y con **GitHub** para guardar tus
 hosts y ajustes en tu propia cuenta.
 
-No hay servidor intermedio: los datos van de tu equipo a tu cuenta. Por eso cada
-usuario necesita crear **su propia aplicación de cliente** una sola vez. Son
-cinco minutos y no cuesta nada.
+No hay servidor intermedio: los datos van de tu equipo a tu cuenta.
+
+**En las versiones publicadas no hay que configurar nada**: los identificadores
+de cliente viajan dentro del programa, así que basta con pulsar **Iniciar
+sesión**, entrar en el navegador y volver. Solo quien compile CloudTerm por su
+cuenta (o quiera usar su propia aplicación de Google/GitHub) tiene que crear un
+identificador; para eso está Ajustes → Cuenta.
 
 ---
 
@@ -25,15 +29,19 @@ cliente y se gestionan la copia y la restauración.
 
 ---
 
-## Por qué hay que crear una aplicación de cliente
+## Identificador de cliente: quién lo crea
 
-Google y GitHub solo entregan un token a una aplicación que se hayan registrado
-antes. Ese registro produce un **identificador de cliente** (un texto público,
-no un secreto).
+Google y GitHub solo entregan un token a una aplicación registrada antes. Ese
+registro produce un **identificador de cliente** (un texto público, no un
+secreto).
 
-CloudTerm no reparte un identificador común a propósito: si lo hiciera, todas
-las copias del programa compartirían la misma identidad y quien controlara ese
-registro podría ver las autorizaciones de todo el mundo.
+**En las versiones publicadas, el identificador ya viene dentro del programa**:
+lo creó el autor una sola vez y se incrustó al compilar. Quien instala CloudTerm,
+por tanto, no crea nada.
+
+Si compilas CloudTerm por tu cuenta, o si prefieres usar tu propia aplicación de
+Google/GitHub en lugar de la integrada, crea la tuya siguiendo los pasos de abajo
+y pégala en **Ajustes → Cuenta**.
 
 El identificador de cliente **no es secreto** y se guarda en
 `~/.config/com.pilahito.cloudterm/auth.json`. Los tokens de acceso sí son
@@ -42,6 +50,9 @@ secretos y van al **llavero del sistema**, nunca a disco.
 ---
 
 ## Google
+
+> Solo hace falta si compilas tú mismo el programa o quieres tu propia
+> aplicación; en la versión publicada puedes ir directo a **Iniciar sesión**.
 
 1. Entra en la [consola de credenciales de Google Cloud](https://console.cloud.google.com/apis/credentials).
 2. Crea un proyecto si no tienes ninguno.
@@ -67,6 +78,29 @@ openid email profile   https://www.googleapis.com/auth/drive.appdata
 Drive ni la ve nadie más, pero ocupa tu cuota.
 
 La copia se guarda ahí, en un fichero llamado `cloudterm-backup.json`.
+
+---
+
+### Android (esquema propio, no loopback)
+
+En Android Google bloquea la redirección a `127.0.0.1`, así que CloudTerm usa
+un esquema propio: al terminar, Google abre `cloudterm://callback?...` y el
+sistema devuelve esa URL a la aplicación. El usuario solo pulsa **Iniciar
+sesión**, entra en el navegador y vuelve solo — igual que en escritorio.
+
+Para que funcione, el autor registra en Google Cloud una credencial de tipo
+**Aplicación Android**:
+
+1. **Nombre del paquete:** `com.pilahito.cloudterm`.
+2. **Huella SHA-1** del certificado de firma del APK:
+   ```bash
+   keytool -list -v -keystore src-tauri/gen/android/keystore.jks -alias cloudterm
+   ```
+3. **URI de redireccionamiento:** `cloudterm://callback`.
+
+El esquema ya está configurado en `tauri.conf.json > plugins > deep-link` y el
+backend lo espera en `google.rs` (`ANDROID_REDIRECT_URI`). Solo hay que
+registrar la URI en Google Cloud y compilar con el Client ID.
 
 ---
 
