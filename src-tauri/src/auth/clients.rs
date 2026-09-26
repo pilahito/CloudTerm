@@ -57,10 +57,14 @@ pub const GOOGLE_CLIENT_ID: &str = "";
 /// la misma clave, este identificador vale para todos los usuarios.
 pub const GOOGLE_ANDROID_CLIENT_ID: &str = "";
 
-/// Client ID de GitHub OAuth App. Público; no es un secreto.
+/// Client ID de la GitHub App «CloudTerm escritorio». Público; no es un secreto.
 ///
-/// Formato: `Ov23liXXXXXXXXXXXXXX`
-pub const GITHUB_CLIENT_ID: &str = "";
+/// Formato de GitHub App: `Iv23…`
+pub const GITHUB_CLIENT_ID: &str = "Iv23li03w1AST26kjqrY";
+
+/// Secreto de esa misma aplicación. GitHub lo exige al canjear el código.
+/// Vacío si el build lo inyecta con `CLOUDTERM_GITHUB_CLIENT_SECRET`.
+pub const GITHUB_CLIENT_SECRET: &str = "51cbdff1c45f4d3e07d33002bfb2c0b77f8c1886";
 
 /// Identificador de Google integrado en el build, si lo hay.
 ///
@@ -93,6 +97,14 @@ pub fn github_client_id() -> &'static str {
     }
 }
 
+/// Secreto de fábrica de GitHub, si el build o el código lo traen.
+pub fn github_client_secret() -> &'static str {
+    match option_env!("CLOUDTERM_GITHUB_CLIENT_SECRET") {
+        Some(value) if !value.trim().is_empty() => value,
+        _ => GITHUB_CLIENT_SECRET,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -105,6 +117,7 @@ mod tests {
         assert_eq!(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_ID.trim());
         assert_eq!(GOOGLE_ANDROID_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID.trim());
         assert_eq!(GITHUB_CLIENT_ID, GITHUB_CLIENT_ID.trim());
+        assert_eq!(GITHUB_CLIENT_SECRET, GITHUB_CLIENT_SECRET.trim());
     }
 
     /// La variable de entorno solo manda si trae algo; si está vacía se usa el

@@ -16,62 +16,76 @@ pub async fn listen(
     expected_state: String,
     provider: &'static str,
 ) -> Result<(u16, tokio::task::JoinHandle<Result<String, String>>), String> {
-    let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
-        .await
-        .map_err(|err| format!("no se pudo abrir el puerto de retorno: {err}"))?;
+    let listener = bind_loopback().await?;
     let port = listener
         .local_addr()
         .map_err(|err| format!("no se pudo leer el puerto de retorno: {err}"))?
         .port();
 
     let handle = tokio::spawn(async move {
-        let accepted = tokio::time::timeout(CALLBACK_TIMEOUT, listener.accept()).await;
-        let (mut socket, _) = match accepted {
-            Ok(Ok(pair)) => pair,
-            Ok(Err(err)) => return Err(format!("fallo aceptando la redirección: {err}")),
-            Err(_) => return Err("se agotó el tiempo esperando al navegador".to_string()),
-        };
-
-        let mut buffer = vec![0u8; 8192];
-        let read = tokio::io::AsyncReadExt::read(&mut socket, &mut buffer)
-            .await
-            .map_err(|err| format!("no se pudo leer la redirección: {err}"))?;
-        let request = String::from_utf8_lossy(&buffer[..read]).to_string();
-
-        let query = request
-            .lines()
-            .next()
-            .and_then(|line| line.split_whitespace().nth(1))
-            .and_then(|target| target.split_once('?').map(|(_, q)| q.to_string()))
-            .unwrap_or_default();
-
-        let parsed: std::collections::HashMap<String, String> =
-            url::form_urlencoded::parse(query.as_bytes())
-                .map(|(k, v)| (k.into_owned(), v.into_owned()))
-                .collect();
-
-        let (ok, message) = match parse_callback(&parsed, &expected_state, provider) {
-            Ok(code) => (true, code),
-            Err(err) => (false, err),
-        };
-        let page = page_for(ok, &message);
-        let response = format!(
-            "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\
-             Content-Length: {}\r\nConnection: close\r\n\r\n{}",
-            page.len(),
-            page
-        );
-        let _ = tokio::io::AsyncWriteExt::write_all(&mut socket, response.as_bytes()).await;
-        let _ = tokio::io::AsyncWriteExt::flush(&mut socket).await;
-
-        if ok {
-            Ok(message)
-        } else {
-            Err(message)
+        let deadline = tokio::time::Instant::now() + CALLBACK_TIMEOUT;
+        loop {
+            let left = deadline.saturating_duration_since(tokio::time::Instant::now());
+            if left.is_zero() {
+                return Err("se agotó el tiempo esperando al navegador".to_string());
+            }
+            let accepted = tokio::time::timeout(left, listener.accept()).await;
+            let (mut socket, _) = match accepted {
+                Ok(Ok(pair)) => pair,
+                Ok(Err(err)) => return Err(format!("fallo aceptando la redirección: {err}")),
+                Err(_) => return Err("se agotó el tiempo esperando al navegador".to_string()),
+            };
+            let mut buffer = vec![0u8; 8192];
+            let read = match tokio::io::AsyncReadExt::read(&mut socket, &mut buffer).await {
+                Ok(0) => continue,
+                Ok(n) => n,
+                Err(_) => continue,
+            };
+            let request = String::from_utf8_lossy(&buffer[..read]).to_string();
+            let target = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("/");
+            if !target.contains('?') || target.contains("favicon") {
+                let _ = tokio::io::AsyncWriteExt::write_all(
+                    &mut socket,
+                    b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                )
+                .await;
+                continue;
+            }
+            let query = target.split_once('?').map(|(_, q)| q.to_string()).unwrap_or_default();
+            let parsed: std::collections::HashMap<String, String> =
+                url::form_urlencoded::parse(query.as_bytes())
+                    .map(|(k, v)| (k.into_owned(), v.into_owned()))
+                    .collect();
+            let (ok, message) = match parse_callback(&parsed, &expected_state, provider) {
+                Ok(code) => (true, code),
+                Err(err) => (false, err),
+            };
+            let page = page_for(ok, &message);
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{page}",
+                page.len()
+            );
+            let _ = tokio::io::AsyncWriteExt::write_all(&mut socket, response.as_bytes()).await;
+            return if ok { Ok(message) } else { Err(message) };
         }
     });
 
     Ok((port, handle))
+}
+
+/// El callback registrado es `http://127.0.0.1:34115/callback`. Si ese puerto
+/// está libre se usa; si no, uno cualquiera (GitHub ignora el puerto de loopback).
+async fn bind_loopback() -> Result<tokio::net::TcpListener, String> {
+    if let Ok(listener) = tokio::net::TcpListener::bind(("127.0.0.1", 34115)).await {
+        return Ok(listener);
+    }
+    tokio::net::TcpListener::bind(("127.0.0.1", 0))
+        .await
+        .map_err(|err| format!("no se pudo abrir el puerto de retorno: {err}"))
 }
 
 pub fn parse_callback(

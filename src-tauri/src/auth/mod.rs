@@ -594,7 +594,14 @@ pub async fn auth_sign_in_github(
         .await
         .map_err(|err| format!("la espera del navegador se interrumpió: {err}"))??;
 
-    let secret = github_oauth_secret();
+    let secret = github_oauth_secret().filter(|value| !value.is_empty()).or_else(|| {
+        let built_in = clients::github_client_secret();
+        if built_in.is_empty() {
+            None
+        } else {
+            Some(built_in.to_string())
+        }
+    });
     let tokens = github::exchange_code(
         &client,
         &client_id,

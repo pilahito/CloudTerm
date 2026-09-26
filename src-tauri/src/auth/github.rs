@@ -59,13 +59,20 @@ pub enum PollOutcome {
 /// URL que se abre en el navegador.
 pub fn authorize_url(client_id: &str, redirect_uri: &str, state: &str, challenge: &str) -> String {
     let mut url = url::Url::parse(AUTHORIZE_URL).expect("URL de GitHub válida");
-    url.query_pairs_mut()
-        .append_pair("client_id", client_id)
-        .append_pair("redirect_uri", redirect_uri)
-        .append_pair("scope", SCOPES)
-        .append_pair("state", state)
-        .append_pair("code_challenge", challenge)
-        .append_pair("code_challenge_method", "S256");
+    {
+        let mut query = url.query_pairs_mut();
+        query
+            .append_pair("client_id", client_id)
+            .append_pair("redirect_uri", redirect_uri);
+        // La GitHub App de fábrica ya trae sus permisos. Un scope clásico la rechaza.
+        if !client_id.starts_with("Iv") {
+            query.append_pair("scope", SCOPES);
+        }
+        query
+            .append_pair("state", state)
+            .append_pair("code_challenge", challenge)
+            .append_pair("code_challenge_method", "S256");
+    }
     url.to_string()
 }
 
