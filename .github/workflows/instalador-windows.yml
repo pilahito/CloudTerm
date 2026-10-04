@@ -1,0 +1,110 @@
+name: Instalador de Windows
+
+# Compila el instalador de Inno Setup, el que deja elegir carpeta y marcar el
+# complemento del Explorador de Windows. El instalador NSIS lo genera
+# `escritorio.yml` con `tauri build`; este es el otro.
+#
+# Se lanza al empujar una etiqueta «v*» o a mano desde la pestaña Actions.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inno:
+    runs-on: windows-latest
+    name: Inno Setup (x64)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Caché de Cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - run: npm ci
+
+      # `--no-bundle` deja solo el ejecutable: para este instalador no hacen
+      # falta el NSIS ni el MSI de Tauri, y compilarlos sería tiempo perdido.
+      - name: Compilar la aplicación
+        run: npm run tauri build -- --no-bundle
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      # La versión sale de `tauri.conf.json`, que es la única fuente de verdad:
+      # así el nombre del instalador y el de la aplicación no se separan nunca.
+      - name: Leer la versión
+        id: version
+        shell: bash
+        run: |
+          valor=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          echo "valor=$valor" >> "$GITHUB_OUTPUT"
+          echo "  Versión: $valor"
+
+      - name: Localizar ISCC
+        id: iscc
+        shell: pwsh
+        run: |
+          $candidatas = @(
+            'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+            'C:\Program Files\Inno Setup 6\ISCC.exe'
+          )
+          $ruta = $candidatas | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $ruta) { throw 'No se encontró ISCC.exe después de instalar Inno Setup.' }
+          "ruta=$ruta" >> $env:GITHUB_OUTPUT
+          & $ruta /? | Select-Object -First 1
+
+      - name: Descargar el arranque de WebView2
+        shell: bash
+        run: ./packaging/windows/preparar.sh
+
+      - name: Compilar el instalador
+        shell: pwsh
+        run: |
+          & '${{ steps.iscc.outputs.ruta }}' `
+            /DVersion=${{ steps.version.outputs.valor }} `
+            packaging\windows\CloudTerm.iss
+
+      # Si el guion se compiló pero no dejó nada, el problema se vería al
+      # intentar descargarlo desde la publicación. Mejor saberlo aquí.
+      - name: Comprobar el resultado
+        shell: pwsh
+        run: |
+          $ficheros = Get-ChildItem dist-instalador -Filter *.exe
+          if (-not $ficheros) { throw 'El instalador no se generó.' }
+          foreach ($f in $ficheros) {
+            "  {0} — {1:N1} MiB" -f $f.Name, ($f.Length / 1MB)
+          }
+
+      - name: Subir el instalador
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudterm-instalador-windows
+          path: dist-instalador/*.exe
+          if-no-files-found: error
+
+      - name: Adjuntar a la release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-instalador/*.exe
+          draft: false
+          fail_on_unmatched_files: true

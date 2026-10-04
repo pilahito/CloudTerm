@@ -49,6 +49,15 @@ dist-release/
 dist-apk/
 
 # ---------------------------------------------------------------------------
+# Instalador de Windows (Inno Setup)
+# ---------------------------------------------------------------------------
+# Lo que deja compilar `packaging/windows/CloudTerm.iss`.
+dist-instalador/
+# Arranque de WebView2: es de Microsoft, pesa y se descarga aparte. Ver
+# `packaging/windows/preparar.sh`.
+packaging/windows/MicrosoftEdgeWebview2Setup.exe
+
+# ---------------------------------------------------------------------------
 # CloudTerm local data (never commit user credentials)
 # ---------------------------------------------------------------------------
 *.cloudterm.db

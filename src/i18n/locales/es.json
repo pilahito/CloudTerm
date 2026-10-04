@@ -351,6 +351,8 @@
   "language.warningBody": "«{id}» lo ha traducido {author}, que no es el creador de CloudTerm. ¿Seguro que quieres usarla?",
   "language.warningDetail": "Una traducción es texto que acaba pintándose en la interfaz. Si no te fías de su origen, no la actives.",
   "language.warningTitle": "Traducción de otra persona",
+  "launch.linkDetail": "Revisa los datos de {host}:{port} y guarda la conexión si quieres conservarla.",
+  "launch.linkTitle": "Enlace ssh:// recibido",
   "office.idle": "sin transferencias",
   "office.queued": "{count} en cola",
   "office.title": "Oficina de transferencias",

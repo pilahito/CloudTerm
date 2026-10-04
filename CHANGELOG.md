@@ -7,6 +7,21 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Escritorio
+
+- **Enlaces `ssh://`**: pulsar uno abre CloudTerm con el formulario de conexión
+  ya relleno (host, puerto, usuario y ruta). El análisis de la dirección está en
+  `src-tauri/src/lanzamiento.rs`, con 17 pruebas; la interfaz solo lo pinta, y
+  guardar la conexión sigue siendo decisión del usuario.
+- **Instalador de Windows con Inno Setup** (`packaging/windows/CloudTerm.iss`):
+  elección de la carpeta de instalación —también sin permisos de administrador— y
+  casillas para los componentes opcionales: el complemento del Explorador y el
+  motor WebView2. Se compila en cada etiqueta desde
+  `.github/workflows/instalador-windows.yml` y se publica junto al NSIS de Tauri.
+- El complemento del Explorador registra CloudTerm como gestor de `ssh://` y en
+  «Abrir con», y deja la aplicación en **Aplicaciones predeterminadas** para
+  poder elegirla o quitársela sin desinstalar.
+
 ### Cuenta
 
 - **Los instaladores publicados ya traen los identificadores de cliente dentro**:
@@ -30,6 +45,11 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 - Para publicar la app, el autor registra en Google Cloud una credencial de tipo
   **Aplicación Android** con el paquete `com.pilahito.cloudterm`, la huella
   SHA-1 del APK y la URI `cloudterm://callback`.
+
+### Cambiado
+
+- **705 claves × 3 idiomas** (español, inglés y chino) y **172 pruebas** en el
+  núcleo Rust.
 
 ---
 

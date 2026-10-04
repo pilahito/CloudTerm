@@ -3,6 +3,7 @@
 
 import { create } from "zustand";
 import type { ToastKind, ToastMessage } from "../types";
+import type { ConnectionDraft } from "./connectionStore";
 import { uid } from "../lib/utils";
 
 /** Vista principal que ocupa el área central. */
@@ -23,6 +24,14 @@ interface UiState {
   tourOpen: boolean;
   importOpen: boolean;
   newHostOpen: boolean;
+  /**
+   * Datos con los que debe abrirse el formulario de conexión.
+   *
+   * Lo rellena un enlace `ssh://`: el sistema arranca CloudTerm con la
+   * dirección y el formulario sale ya escrito. Quien lo lee lo deja a `null`
+   * para que un segundo render no vuelva a pisar lo que el usuario escribió.
+   */
+  nuevoHostDraft: ConnectionDraft | null;
   /** Host cuyas propiedades se están editando, o `null` si no hay diálogo. */
   hostSettingsId: string | null;
   /** Grupos del árbol de hosts que están contraídos. */
@@ -42,6 +51,7 @@ interface UiState {
   setTourOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
   setNewHostOpen: (open: boolean) => void;
+  setNuevoHostDraft: (draft: ConnectionDraft | null) => void;
   setHostSettingsId: (id: string | null) => void;
 
   pushToast: (kind: ToastKind, title: string, description?: string) => string;
@@ -60,6 +70,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   tourOpen: false,
   importOpen: false,
   newHostOpen: false,
+  nuevoHostDraft: null,
   hostSettingsId: null,
   collapsedGroups: [],
   toasts: [],
@@ -83,6 +94,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   setTourOpen: (open) => set({ tourOpen: open }),
   setImportOpen: (open) => set({ importOpen: open }),
   setNewHostOpen: (open) => set({ newHostOpen: open }),
+  setNuevoHostDraft: (draft) => set({ nuevoHostDraft: draft }),
   setHostSettingsId: (id) => set({ hostSettingsId: id }),
 
   pushToast: (kind, title, description) => {

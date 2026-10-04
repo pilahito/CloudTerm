@@ -58,6 +58,16 @@ Todo sale de **una sola página**: [github.com/pilahito/CloudTerm/releases](http
 | **Linux** | AppImage | [CloudTerm_1.0.5_amd64.AppImage](https://github.com/pilahito/CloudTerm/releases/download/v1.0.5/CloudTerm_1.0.5_amd64.AppImage) |
 | **Android** | APK firmado | [CloudTerm-android-1.3.5.apk](https://github.com/pilahito/CloudTerm-Android/releases/download/v1.3.5/CloudTerm-android-1.3.5.apk) |
 
+En **Windows** hay dos instaladores y los dos instalan lo mismo:
+
+| Instalador | Para qué |
+|---|---|
+| `…_x64-setup.exe` (NSIS, lo genera Tauri) | El de siempre: rápido y sin preguntas. |
+| `…-windows-x64-instalador.exe` (Inno Setup) | Deja **elegir la carpeta**, instalarlo solo para tu usuario —sin permisos de administrador— y marcar el **complemento del Explorador**: los enlaces `ssh://` abren CloudTerm con la conexión ya escrita. |
+
+El segundo se compila desde `packaging/windows/CloudTerm.iss`; las instrucciones
+están en [`packaging/windows/LEEME.md`](packaging/windows/LEEME.md).
+
 Código Android: [pilahito/CloudTerm-Android](https://github.com/pilahito/CloudTerm-Android).
 
 ---

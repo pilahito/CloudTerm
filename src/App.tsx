@@ -30,7 +30,8 @@ import { useDonationUnlock } from "./hooks/useDonationUnlock";
 import { useTheme } from "./hooks/useTheme";
 import type { Tab } from "./types";
 import { cx } from "./lib/utils";
-import { useDocumentLanguage } from "./i18n";
+import { useDocumentLanguage, t } from "./i18n";
+import { lanzamientoInicial } from "./lib/lanzamiento";
 import { AuthGate } from "./components/Seguridad/AuthGate";
 import { UpdateDialog } from "./components/Actualizacion";
 import { Onboarding } from "./components/Onboarding";
@@ -90,6 +91,36 @@ export default function App() {
       void useConnectionStore.getState().refreshStatuses();
     });
   }, [loadConnections]);
+
+  // El complemento del Explorador de Windows abre CloudTerm con un enlace
+  // `ssh://`. Se pide una sola vez y el formulario sale relleno: guardar la
+  // conexión es decisión del usuario, no del enlace.
+  useEffect(() => {
+    let vivo = true;
+
+    void lanzamientoInicial().then((destino) => {
+      if (!vivo || !destino) return;
+
+      const ui = useUiStore.getState();
+      ui.setNuevoHostDraft({
+        name: destino.host,
+        host: destino.host,
+        port: destino.puerto,
+        username: destino.usuario,
+        protocol: "ssh",
+      });
+      ui.setNewHostOpen(true);
+      ui.pushToast(
+        "info",
+        t("launch.linkTitle"),
+        t("launch.linkDetail", { host: destino.host, port: String(destino.puerto) }),
+      );
+    });
+
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   return (
     <div className="flex h-full flex-col bg-bg text-text">

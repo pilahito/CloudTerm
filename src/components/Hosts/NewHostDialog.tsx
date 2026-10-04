@@ -1,7 +1,7 @@
 // CloudTerm · github.com/pilahito/cloudterm
 // © 2026 DavidPilahito7 · AGPL-3.0-or-later · Ver LICENSE
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Server, KeyRound, Lock } from "lucide-react";
 import { useUiStore } from "../../stores/uiStore";
@@ -20,6 +20,8 @@ export function NewHostDialog() {
   const pushToast = useUiStore((s) => s.pushToast);
   const connections = useConnectionStore((s) => s.connections);
   const addConnection = useConnectionStore((s) => s.addConnection);
+  const draft = useUiStore((s) => s.nuevoHostDraft);
+  const setDraft = useUiStore((s) => s.setNuevoHostDraft);
 
   const [name, setName] = useState("");
   const [host, setHost] = useState("");
@@ -36,6 +38,24 @@ export function NewHostDialog() {
     () => [...new Set(connections.map((c) => c.group).filter(Boolean))].sort(),
     [connections],
   );
+
+  // Un enlace `ssh://` abre este formulario ya escrito. El borrador se consume
+  // una sola vez: si se dejara puesto, cada apertura del diálogo borraría lo
+  // que el usuario estuviera escribiendo.
+  useEffect(() => {
+    if (!open || !draft) return;
+
+    setName(draft.name);
+    setHost(draft.host);
+    setPort(draft.port ? String(draft.port) : "");
+    setUsername(draft.username ?? "");
+    setProtocol(draft.protocol ?? "ssh");
+    setGroup(draft.group ?? "General");
+    setAuthMethod(draft.authMethod ?? "key");
+    setKeyPath(draft.privateKeyPath ?? "");
+    setTimeoutSec(draft.timeoutMs ? String(Math.round(draft.timeoutMs / 1000)) : "60");
+    setDraft(null);
+  }, [open, draft, setDraft]);
 
   const close = () => {
     setOpen(false);

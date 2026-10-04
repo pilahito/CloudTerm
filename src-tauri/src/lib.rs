@@ -13,6 +13,7 @@ pub mod actualizacion;
 pub mod actualizacion_install;
 pub mod idiomas;
 pub mod auth;
+pub mod lanzamiento;
 
 use serde::Serialize;
 
@@ -35,6 +36,16 @@ fn app_info() -> AppInfo {
         license: "AGPL-3.0-or-later",
         contact: "57416155+pilahito@users.noreply.github.com",
     }
+}
+
+/// Enlace `ssh://` con el que se abrió CloudTerm, si se abrió con uno.
+///
+/// La interfaz lo pide una sola vez al arrancar para dejar el formulario de
+/// conexión relleno. No hay estado que guardar: los argumentos del proceso no
+/// cambian mientras vive.
+#[tauri::command]
+fn lanzamiento_inicial() -> Option<lanzamiento::Destino> {
+    lanzamiento::leer_entorno()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -90,6 +101,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             app_info,
+            lanzamiento_inicial,
             ai::models::detectar_hardware,
             ai::models::modelos_compatibles,
             ai::models::descargar_modelo,

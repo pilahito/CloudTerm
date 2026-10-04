@@ -351,6 +351,8 @@
   "language.warningBody": "“{id}” was translated by {author}, who is not CloudTerm's creator. Are you sure you want to use it?",
   "language.warningDetail": "A translation is text that ends up rendered in the interface. If you don't trust where it came from, don't turn it on.",
   "language.warningTitle": "Someone else's translation",
+  "launch.linkDetail": "Check the details for {host}:{port} and save the connection if you want to keep it.",
+  "launch.linkTitle": "ssh:// link received",
   "office.idle": "no transfers",
   "office.queued": "{count} queued",
   "office.title": "Transfer office",

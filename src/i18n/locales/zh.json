@@ -351,6 +351,8 @@
   "language.warningBody": "“{id}” 由 {author} 翻译，并非 CloudTerm 的作者。确定要使用吗？",
   "language.warningDetail": "翻译是会显示在界面上的文本。如果不信任其来源，请不要启用。",
   "language.warningTitle": "他人的翻译",
+  "launch.linkDetail": "请确认 {host}:{port} 的信息，如需保留请保存该连接。",
+  "launch.linkTitle": "收到 ssh:// 链接",
   "office.idle": "没有传输",
   "office.queued": "排队 {count} 个",
   "office.title": "传输办公室",

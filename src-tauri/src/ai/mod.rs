@@ -705,7 +705,8 @@ mod tests {
     fn test_ai_config_defaults() {
         let config = AiConfig::default();
         assert_eq!(config.active_id, "ollama");
-        assert_eq!(config.providers.len(), 3);
+        // Ollama y llama.cpp son locales; DeepSeek y el compatible, remotos.
+        assert_eq!(config.providers.len(), 4);
         // El proveedor local no necesita clave; los remotos sí.
         let ollama = config.providers.iter().find(|p| p.id == "ollama").unwrap();
         assert!(ollama.api_key_env.is_none());
