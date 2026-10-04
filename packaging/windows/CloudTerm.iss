@@ -191,10 +191,13 @@ Filename: "{tmp}\MicrosoftEdgeWebview2Setup.exe"; Parameters: "/silent /install"
 Filename: "{app}\CloudTerm.exe"; Description: "{cm:LaunchProgram,CloudTerm}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-; Lo que NO hace este instalador al desinstalarse: borrar los datos del usuario
-; (`%APPDATA%\com.pilahito.cloudterm`). Ahí están sus hosts, su historial y sus
-; idiomas, y quitar el programa no debería llevarse por delante el trabajo de
-; nadie. Del Registro se encargan los `uninsdelete*` de arriba.
+// En el [Code] los comentarios van con `//`: el compilador de Pascal Script no
+// trata `;` como comentario, y una línea que empiece por `;` lo aborta.
+//
+// Lo que NO hace este instalador al desinstalarse: borrar los datos del usuario
+// (`%APPDATA%\com.pilahito.cloudterm`). Ahí están sus hosts, su historial y sus
+// idiomas, y quitar el programa no debería llevarse por delante el trabajo de
+// nadie. Del Registro se encargan los `uninsdelete*` de arriba.
 
 /// ¿Hay WebView2 instalado para todos los usuarios o solo para el actual?
 ///
