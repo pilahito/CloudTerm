@@ -44,6 +44,12 @@ jobs:
       # `--no-bundle` deja solo el ejecutable: para este instalador no hacen
       # falta el NSIS ni el MSI de Tauri, y compilarlos sería tiempo perdido.
       - name: Compilar la aplicación
+        env:
+          # Los mismos identificadores integrados que usa el instalador de
+          # Tauri (`build-installers.yml`): sin esto, quien instalara la versión
+          # de Inno Setup tendría que crearse su propia aplicación de Google.
+          CLOUDTERM_GOOGLE_CLIENT_ID: ${{ secrets.CLOUDTERM_GOOGLE_CLIENT_ID }}
+          CLOUDTERM_GITHUB_CLIENT_ID: ${{ secrets.CLOUDTERM_GITHUB_CLIENT_ID }}
         run: npm run tauri build -- --no-bundle
 
       - name: Instalar Inno Setup
