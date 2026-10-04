@@ -107,6 +107,50 @@ jobs:
           path: dist-instalador/*.exe
           if-no-files-found: error
 
+      # Un instalador que compila no es un instalador que funciona. Aquí se
+      # instala de verdad, en silencio y solo para el usuario que compila, y se
+      # mira lo que tenía que dejar: el ejecutable y el registro de `ssh://` con
+      # el complemento marcado. Después se desinstala y se comprueba que se
+      # lleva lo suyo. Va después de subir el artefacto —si falla, el instalador
+      # sigue ahí para mirarlo— y antes de adjuntarlo a la publicación: una
+      # etiqueta no publica un instalador roto.
+      - name: Probar el instalador
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem dist-instalador -Filter *.exe | Select-Object -First 1).FullName
+          $destino = Join-Path $env:RUNNER_TEMP 'cloudterm-prueba'
+          $registro = Join-Path $env:RUNNER_TEMP 'instalador.log'
+
+          $codigo = (Start-Process $exe -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER',
+            '/TASKS=explorador', "/DIR=`"$destino`"", "/LOG=`"$registro`""
+          )).ExitCode
+          if ($codigo -ne 0) {
+            if (Test-Path $registro) { Get-Content $registro -Tail 40 }
+            throw "El instalador terminó con el código $codigo"
+          }
+
+          $programa = Join-Path $destino 'CloudTerm.exe'
+          if (-not (Test-Path $programa)) { throw "El instalador no dejó $programa" }
+          "  Ejecutable instalado — {0:N1} MiB" -f ((Get-Item $programa).Length / 1MB)
+
+          $clave = 'HKCU:\Software\Classes\ssh\shell\open\command'
+          $orden = (Get-ItemProperty $clave -ErrorAction SilentlyContinue).'(default)'
+          if ($orden -notmatch 'CloudTerm\.exe') {
+            throw "El esquema ssh:// no quedó registrado: '$orden'"
+          }
+          "  Registro ssh:// — $orden"
+
+          $desinstalador = Join-Path $destino 'unins000.exe'
+          if (-not (Test-Path $desinstalador)) { throw 'El instalador no dejó desinstalador' }
+          $codigo = (Start-Process $desinstalador -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+          )).ExitCode
+          if ($codigo -ne 0) { throw "El desinstalador terminó con el código $codigo" }
+
+          if (Test-Path $clave) { throw 'El desinstalador dejó el registro de ssh://' }
+          "  Desinstalado y registro limpio"
+
       - name: Adjuntar a la release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
