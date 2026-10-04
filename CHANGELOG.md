@@ -5,7 +5,7 @@ El proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
 ---
 
-## [Unreleased]
+## [1.0.9] — 2026-10-04
 
 ### Escritorio
 

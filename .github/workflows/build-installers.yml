@@ -106,11 +106,20 @@ jobs:
           releaseBody: |
             ## CloudTerm ${{ steps.version.outputs.valor }}
 
+            **Enlaces `ssh://`**: el instalador de Windows registra CloudTerm
+            como gestor de estos enlaces, así que pulsar uno abre la app con el
+            formulario de conexión ya relleno. Guardar la conexión sigue siendo
+            cosa tuya.
+
+            **Instalador de Windows con Inno Setup**, junto al NSIS de siempre:
+            deja elegir la carpeta, instalarlo solo para tu usuario —sin permisos
+            de administrador— y marcar el complemento del Explorador.
+
             Actualizar **desde la app**: Ayuda → Buscar actualizaciones descarga
             el instalador de esta plataforma y lo abre.
 
-            APK nativo (también actualiza desde la app):
-            https://github.com/pilahito/CloudTerm-Android/releases/tag/v1.3.5
+            APK nativo de Android (también actualiza desde la app):
+            https://github.com/pilahito/CloudTerm-Android/releases/latest
           releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.destino }} --bundles ${{ matrix.paquetes }}
