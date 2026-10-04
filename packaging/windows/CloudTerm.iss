@@ -87,8 +87,10 @@ SetupLogging=yes
 
 [Languages]
 ; El primero de la lista es el idioma con el que arranca el instalador.
+; El inglés no está en `Languages\` —es el `Default.isl` del compilador—, así
+; que se pide por ahí y no como `Languages\English.isl`, que no existe.
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
-Name: "english"; MessagesFile: "compiler:Languages\English.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
 ; Los dos textos que pide el instalador: el saludo de la comunidad y la
